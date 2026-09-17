@@ -4,17 +4,19 @@ Spec Formatter — Beta install
 Requirements
 ------------
 - Microsoft Word (desktop) on Windows, signed in with your work account.
-- You must be on the company network (the add-in loads from a hosted URL and this
-  folder lives on a shared drive).
+- IMPORTANT: this folder must live on a NETWORK SHARE (a \\server\share path).
+  Office rejects a local folder (C:\...) as an add-in catalog. Run the installer
+  from the shared-drive copy, not from your Desktop/Downloads.
 
 Install (one time)
 ------------------
-1. Double-click  Install-Spec-Formatter-Beta.cmd
+1. From the shared-drive copy, double-click  Install-Spec-Formatter-Beta.cmd
      (Windows may warn about an unknown script — choose "More info" > "Run anyway".
       It only writes a per-user registry entry; no admin rights are used.)
 2. Fully close Word (every window), then reopen it and open any document.
-3. Insert tab  >  Add-ins  >  My Add-ins  >  SHARED FOLDER tab
+3. Home tab  >  Add-ins  >  More Add-ins  >  SHARED FOLDER tab
      >  "Spec Formatter (Beta)"  >  Add.
+     (On older Word the Add-ins button is on the Insert tab.)
 4. The "Spec Formatter" button appears on the Home ribbon. Click it to open the pane.
 
 If the SHARED FOLDER tab is empty

@@ -101,17 +101,20 @@ classic **XML** manifest and a per-user **shared-folder catalog** (no admin, no 
    Deploy `dist/` to that host, and you'll get `appPackage/beta-package/` containing
    `manifest.xml`, `Install-Spec-Formatter-Beta.cmd`, an uninstaller, and `BETA-README.txt`.
 
-2. **Put `beta-package/` on a shared drive** your testers can reach (e.g. a beta folder on the
-   network). The installer registers *that folder* as the catalog, so all testers point at the
-   same manifest.
+2. **Put `beta-package/` on a NETWORK SHARE** (a `\\server\share` path) your testers can reach.
+   Office add-in catalogs **must be a UNC network share** — a local folder (`C:\...`) is rejected
+   with *"Please add or enable add-in catalogs from the Trust Center"*. The installer registers
+   *its own folder* as the catalog, so run it from the share.
 
-3. **Testers run `Install-Spec-Formatter-Beta.cmd`** once, restart Word, then
-   *Insert ▸ Add-ins ▸ My Add-ins ▸ Shared Folder ▸ Spec Formatter (Beta) ▸ Add*. The Home-ribbon
+3. **Testers run `Install-Spec-Formatter-Beta.cmd`** once (from the share), restart Word, then
+   *Home ▸ Add-ins ▸ More Add-ins ▸ Shared Folder ▸ Spec Formatter (Beta) ▸ Add*. The Home-ribbon
    button appears. (`BETA-README.txt` has the tester-facing steps.)
 
-Simplest fallback with no script: a tester can *Insert ▸ Add-ins ▸ Upload My Add-in* and pick
-`manifest.xml` directly. Requirements: Word desktop on Windows, on the network. Ship an update by
-re-hosting `dist/` and (if the ribbon/manifest changed) re-sharing `beta-package/`.
+Manual alternative (no script): *File ▸ Options ▸ Trust Center ▸ Trust Center Settings ▸ Trusted
+Add-in Catalogs*, paste the share's **UNC path**, **Add catalog**, tick **Show in Menu**, OK, and
+restart Word — then add it from the Shared Folder tab. Requirements: Word desktop on Windows, on the
+network. Ship an update by re-hosting `dist/` (push to `main`) and, if the manifest changed,
+re-sharing `beta-package/`.
 
 ## Verify
 
