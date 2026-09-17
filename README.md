@@ -106,15 +106,20 @@ classic **XML** manifest and a per-user **shared-folder catalog** (no admin, no 
    with *"Please add or enable add-in catalogs from the Trust Center"*. The installer registers
    *its own folder* as the catalog, so run it from the share.
 
-3. **Testers run `Install-Spec-Formatter-Beta.cmd`** once (from the share), restart Word, then
-   *Home ▸ Add-ins ▸ More Add-ins ▸ Shared Folder ▸ Spec Formatter (Beta) ▸ Add*. The Home-ribbon
-   button appears. (`BETA-README.txt` has the tester-facing steps.)
+3. **Testers run `Install-Spec-Formatter-Beta.cmd`** once **from the share** — it registers the
+   catalog automatically (no Trust Center needed). Restart Word, then
+   *Home ▸ Add-ins ▸ **Advanced…** ▸ Shared Folder ▸ Spec Formatter (Beta) ▸ Add*. The Home-ribbon
+   button appears. (The new Add-ins panel only shows Store/Developer add-ins up front; the
+   **Advanced…** link opens the dialog with the Shared Folder section — this is the non-obvious step.)
+   `BETA-README.txt` has the tester-facing version.
 
 Manual alternative (no script): *File ▸ Options ▸ Trust Center ▸ Trust Center Settings ▸ Trusted
-Add-in Catalogs*, paste the share's **UNC path**, **Add catalog**, tick **Show in Menu**, OK, and
-restart Word — then add it from the Shared Folder tab. Requirements: Word desktop on Windows, on the
-network. Ship an update by re-hosting `dist/` (push to `main`) and, if the manifest changed,
-re-sharing `beta-package/`.
+Add-in Catalogs*, paste the share's **UNC path**, **Add catalog**, tick **Show in Menu**, OK, restart
+Word, then add it via *Advanced… ▸ Shared Folder*.
+
+Troubleshooting: if an old preview button is stuck on the ribbon, remove it via *File ▸ Options ▸
+Customize Ribbon*. Requirements: Word desktop on Windows, on the network. Ship an update by
+re-hosting `dist/` (push to `main`) and, if the manifest changed, re-sharing `beta-package/`.
 
 ## Verify
 

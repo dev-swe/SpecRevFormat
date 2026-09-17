@@ -45,17 +45,19 @@ reg add "%KEY%" /v Url   /t REG_SZ    /d "%CAT%"  /f >nul
 reg add "%KEY%" /v Flags /t REG_DWORD /d 1        /f >nul
 
 echo.
-echo   Spec Formatter (Beta) catalog registered:
+echo   Spec Formatter (Beta) catalog registered automatically:
 echo     %CAT%
+echo   (No need to touch the Trust Center - this script added the catalog for you.)
 echo.
 echo   Finish in Word:
 echo     1. Fully close Word (every window).
 echo     2. Reopen Word and open any document.
-echo     3. Insert tab  ^>  Add-ins  ^>  My Add-ins  ^>  SHARED FOLDER tab
+echo     3. Home tab  ^>  Add-ins  ^>  Advanced...  ^>  SHARED FOLDER
 echo          ^>  Spec Formatter (Beta)  ^>  Add.
+echo        (On older Word the Add-ins button is on the Insert tab.)
 echo     4. The "Spec Formatter" button appears on the Home ribbon.
 echo.
-echo   (If the SHARED FOLDER tab is empty: File ^> Options ^> Trust Center ^>
+echo   (If SHARED FOLDER shows nothing: File ^> Options ^> Trust Center ^>
 echo    Trust Center Settings ^> Trusted Add-in Catalogs, tick "Show in Menu"
 echo    for the entry above, click OK, and restart Word.)
 echo.
