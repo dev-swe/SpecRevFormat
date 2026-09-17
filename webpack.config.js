@@ -78,6 +78,10 @@ module.exports = async (env, options) => {
       new CopyWebpackPlugin({
         patterns: [
           {
+            from: "src/index.html",
+            to: "index.html",
+          },
+          {
             from: "appPackage/assets/*",
             to: "assets/[name][ext][query]",
           },
