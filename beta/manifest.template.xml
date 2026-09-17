@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Classic XML add-in manifest for BETA sideloading (shared-folder catalog or
+  "Upload My Add-in"). {{HOST}} is filled in by scripts/build-beta.js from the
+  BETA_URL/PROD_URL env value (must end in "/"). The unified appPackage/manifest.json
+  remains the source of truth for production Central Deployment.
+-->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>b7e6c2a4-9f31-4d5c-8a2e-1c0d5f7a9b34</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Systems West Engineers</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Spec Formatter (Beta)"/>
+  <Description DefaultValue="Format construction specifications by architect standard."/>
+  <IconUrl DefaultValue="{{HOST}}assets/swe-ribbon-32-v2.png"/>
+  <HighResolutionIconUrl DefaultValue="{{HOST}}assets/swe-ribbon-80-v2.png"/>
+  <SupportUrl DefaultValue="{{HOST}}"/>
+  <AppDomains>
+    <AppDomain>{{HOST}}</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="WordApi" MinVersion="1.3"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="{{HOST}}taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <FunctionFile resid="Commands.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="SpecFormatter.Group">
+                <Label resid="Group.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16"/>
+                  <bt:Image size="32" resid="Icon.32"/>
+                  <bt:Image size="80" resid="Icon.80"/>
+                </Icon>
+                <Control xsi:type="Button" id="SpecFormatter.TaskpaneButton">
+                  <Label resid="TaskpaneButton.Label"/>
+                  <Supertip>
+                    <Title resid="TaskpaneButton.Label"/>
+                    <Description resid="TaskpaneButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16"/>
+                    <bt:Image size="32" resid="Icon.32"/>
+                    <bt:Image size="80" resid="Icon.80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>SpecFormatterTaskpane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="{{HOST}}assets/swe-ribbon-16-v2.png"/>
+        <bt:Image id="Icon.32" DefaultValue="{{HOST}}assets/swe-ribbon-32-v2.png"/>
+        <bt:Image id="Icon.80" DefaultValue="{{HOST}}assets/swe-ribbon-80-v2.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Commands.Url" DefaultValue="{{HOST}}commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="{{HOST}}taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Group.Label" DefaultValue="Spec Formatter"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="Spec Formatter"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Open the Spec Formatter pane to format this specification."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spec Formatter</title>
+
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+    <link href="taskpane.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+    <!-- Forest hero header (matches the SWE Toolbox title bar) -->
+    <header class="hero">
+        <div class="hero-badge">
+            <img src="../../appPackage/assets/swe-logo.png" alt="Systems West Engineers" class="hero-logo" />
+        </div>
+        <div class="hero-text">
+            <h1 class="hero-title">Spec Formatter</h1>
+            <p class="hero-subtitle">Format construction specifications by architect standard.</p>
+        </div>
+    </header>
+
+    <section id="sideload-msg" class="pad muted">
+        Please
+        <a target="_blank"
+            href="https://learn.microsoft.com/office/dev/add-ins/testing/test-debug-office-add-ins#sideload-an-office-add-in-for-testing">sideload</a>
+        this add-in in Word to get started.
+    </section>
+
+    <main id="app-body" style="display: none;">
+        <!-- ============ Format ============ -->
+        <section class="card">
+            <div class="card-header"><span class="card-title">Format document</span></div>
+            <div class="card-body">
+                <label class="field-label" for="template-select">Architect template</label>
+                <select id="template-select" class="control select"></select>
+
+                <div id="tag-row" class="field" style="display: none;">
+                    <label class="field-label" for="tag-text">Tag text</label>
+                    <input id="tag-text" class="control" type="text" value="(ASI-1)" />
+                </div>
+
+                <p id="not-saved-warning" class="warning" style="display: none;">
+                    This document hasn't been saved yet. Formatting still works, but save it (or use
+                    &ldquo;Save a copy first&rdquo;) so you have a fallback.
+                </p>
+
+                <div class="button-row">
+                    <button id="preview-btn" class="btn btn-secondary btn-block" type="button">Preview changes</button>
+                </div>
+
+                <div id="preview-panel" class="preview-panel" style="display: none;"></div>
+
+                <div class="button-row">
+                    <button id="backup-btn" class="btn btn-secondary" type="button">Save a copy first</button>
+                    <button id="format-btn" class="btn btn-primary" type="button">Format Specification</button>
+                </div>
+
+                <p id="status" class="status" aria-live="polite"></p>
+
+                <div class="button-row" id="log-row" style="display: none;">
+                    <button id="download-log-btn" class="btn btn-secondary btn-block" type="button">
+                        Download revision log (CSV)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Revision summary ============ -->
+        <details class="card" id="revision-card">
+            <summary class="card-header">
+                <span class="card-title">Revision summary</span>
+                <span class="chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="card-body">
+                <p class="help">
+                    Editable summary exported to a <b>Revision Change Narrative (.docx)</b>. It's saved
+                    inside this document; the specification text is never changed.
+                </p>
+
+                <div class="grid">
+                    <div>
+                        <label class="field-label" for="rev-project">Project</label>
+                        <input id="rev-project" class="control" type="text" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="rev-revision">Revision</label>
+                        <input id="rev-revision" class="control" type="text" placeholder="ASI-1" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="rev-date">Date</label>
+                        <input id="rev-date" class="control" type="text" placeholder="(today if blank)" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="rev-preparedBy">Prepared by</label>
+                        <input id="rev-preparedBy" class="control" type="text" />
+                    </div>
+                </div>
+
+                <label class="field-label" for="rev-section">Section</label>
+                <input id="rev-section" class="control" type="text"
+                    placeholder="SECTION 220500 - GENERAL PLUMBING PROVISIONS" />
+
+                <div id="rev-rows" class="rev-rows"></div>
+                <p id="rev-empty" class="help">No rows yet. Add one, or pull them from a scan.</p>
+
+                <div class="button-row wrap">
+                    <button id="rev-add-btn" class="btn btn-secondary" type="button">Add row</button>
+                    <button id="rev-load-btn" class="btn btn-secondary" type="button">Load from scan</button>
+                </div>
+                <div class="button-row">
+                    <button id="rev-export-btn" class="btn btn-primary btn-block" type="button">
+                        Export narrative (.DOCX)
+                    </button>
+                </div>
+                <div class="button-row">
+                    <button id="rev-export-json-btn" class="btn btn-secondary btn-block" type="button">
+                        Export for Track Revisions (JSON)
+                    </button>
+                </div>
+                <p class="help">
+                    Drop the JSON in the project's <b>10&nbsp;CAD\Coordination\spec_narratives\</b>
+                    folder (or import it from the Track Revisions tool) to compile it into the shared
+                    Change Narrative. Shared spec templates live in
+                    <b>10&nbsp;CAD\Coordination\templates\spec_templates.json</b> &mdash; use the
+                    Templates panel's Import to load them.
+                </p>
+                <p id="rev-status" class="status" aria-live="polite"></p>
+            </div>
+        </details>
+
+        <!-- ============ Templates ============ -->
+        <details class="card" id="templates-card">
+            <summary class="card-header">
+                <span class="card-title">Templates</span>
+                <span class="chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="card-body">
+                <div id="template-list" class="template-list"></div>
+
+                <div class="button-row wrap">
+                    <button id="add-template-btn" class="btn btn-secondary" type="button">Add template</button>
+                    <button id="export-btn" class="btn btn-secondary" type="button">Export</button>
+                    <button id="import-btn" class="btn btn-secondary" type="button">Import</button>
+                    <input id="import-file" type="file" accept="application/json,.json" style="display: none;" />
+                </div>
+
+                <!-- Editor (shown when adding/editing) -->
+                <div id="template-editor" class="editor" style="display: none;">
+                    <h3 class="editor-title" id="editor-title">Edit template</h3>
+
+                    <label class="field-label" for="ed-name">Name</label>
+                    <input id="ed-name" class="control" type="text" />
+
+                    <label class="checkbox">
+                        <input id="ed-appendTag" type="checkbox" />
+                        <span>Tag-append mode (append a tag after bold / strikethrough runs instead of
+                            reformatting)</span>
+                    </label>
+
+                    <div class="grid">
+                        <div>
+                            <label class="field-label" for="ed-bodyFont">Body font</label>
+                            <input id="ed-bodyFont" class="control" type="text" />
+                        </div>
+                        <div>
+                            <label class="field-label" for="ed-bodySize">Body size (pt)</label>
+                            <input id="ed-bodySize" class="control" type="number" min="1" step="0.5" />
+                        </div>
+                        <div>
+                            <label class="field-label" for="ed-headingFont">Heading font</label>
+                            <input id="ed-headingFont" class="control" type="text" />
+                        </div>
+                        <div>
+                            <label class="field-label" for="ed-headingSize">Heading size (pt)</label>
+                            <input id="ed-headingSize" class="control" type="number" min="1" step="0.5" />
+                        </div>
+                        <div>
+                            <label class="field-label" for="ed-paraSpacingPt">Paragraph spacing (pt)</label>
+                            <input id="ed-paraSpacingPt" class="control" type="number" min="0" step="0.5" />
+                        </div>
+                    </div>
+
+                    <label class="field-label" for="ed-headingStyles">Heading paragraph styles</label>
+                    <input id="ed-headingStyles" class="control" type="text" placeholder="SCT, PRT, ART" />
+                    <p class="help">
+                        Comma-separated Word paragraph style names treated as headings (e.g. the CSI
+                        styles SCT, PRT, ART). Matched in addition to built-in Heading styles and text
+                        patterns like &ldquo;SECTION 220500&rdquo;.
+                    </p>
+
+                    <div class="grid colors">
+                        <div>
+                            <label class="field-label" for="ed-bodyColor">Body color</label>
+                            <input id="ed-bodyColor" class="control color" type="color" />
+                        </div>
+                        <div>
+                            <label class="field-label" for="ed-headingColor">Heading color</label>
+                            <input id="ed-headingColor" class="control color" type="color" />
+                        </div>
+                        <div>
+                            <label class="field-label" for="ed-additionColor">Addition color</label>
+                            <input id="ed-additionColor" class="control color" type="color" />
+                        </div>
+                        <div>
+                            <label class="field-label" for="ed-deletionColor">Deletion color</label>
+                            <input id="ed-deletionColor" class="control color" type="color" />
+                        </div>
+                    </div>
+
+                    <div class="button-row">
+                        <button id="editor-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                        <button id="editor-save" class="btn btn-primary" type="button">Save template</button>
+                    </div>
+                    <p id="editor-error" class="warning" style="display: none;"></p>
+                </div>
+            </div>
+        </details>
+    </main>
+</body>
+
+</html>

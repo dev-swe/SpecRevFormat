@@ -1,0 +1,519 @@
+/*
+ * Spec Formatter task pane — SWE Toolbox "Forest & Sand" theme.
+ * Palette and component language ported from the pyRevit SweStyles.xaml /
+ * SweDialog.xaml so this add-in matches the SWE desktop tools.
+ */
+
+:root {
+  --forest: #12413c;
+  --forest-hover: #1a5c54;
+  --forest-soft: #eef4f3;
+  --header-tint: #f3f7f6;
+  --sand: #f1e1c0;
+  --sand-hover: #e7d4ae;
+  --gold: #c3a571;
+  --window-bg: #f4f6f8;
+  --card: #ffffff;
+  --border-soft: #d7dee5;
+  --input-border: #c7d2da;
+  --muted: #64748b;
+  --text-body: #334155;
+  --header-text-dark: #f8fafc;
+  --header-text-soft: #dce7e5;
+  --grid-line: #e2e8f0;
+  --error: #a4262c;
+}
+
+html,
+body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--window-bg);
+  color: var(--text-body);
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+a {
+  color: var(--forest);
+}
+
+/* ============ Hero header ============ */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px;
+  background: var(--forest);
+}
+
+.hero-badge {
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-logo {
+  display: block;
+  height: 26px;
+  width: auto;
+}
+
+.hero-title {
+  margin: 0;
+  color: var(--header-text-dark);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.hero-subtitle {
+  margin: 2px 0 0;
+  color: var(--header-text-soft);
+  font-size: 12px;
+}
+
+.pad {
+  padding: 16px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+main {
+  padding: 12px;
+}
+
+/* ============ Cards ============ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  background: var(--header-tint);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.card-title {
+  color: var(--forest);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.card-body {
+  padding: 14px;
+}
+
+/* details/summary card */
+details.card > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details.card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.chevron {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+details[open] > summary .chevron {
+  transform: rotate(-135deg);
+}
+
+/* ============ Fields ============ */
+.field {
+  margin-top: 12px;
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-body);
+  margin: 12px 0 4px;
+}
+
+.help {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.control {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--text-body);
+  background: var(--card);
+}
+
+.control:focus {
+  outline: none;
+  border-color: var(--forest);
+  box-shadow: 0 0 0 1px var(--forest);
+}
+
+/* native select with a muted caret */
+.select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L10 0 L5 6 Z' fill='%2364748b'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  cursor: pointer;
+}
+
+input.control.color {
+  height: 36px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 14px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.checkbox input {
+  margin: 1px 0 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--forest);
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+
+.grid.colors {
+  margin-top: 8px;
+}
+
+/* ============ Buttons ============ */
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.button-row.wrap {
+  flex-wrap: wrap;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Primary: Sand fill, Forest text, Gold border */
+.btn-primary {
+  background: var(--sand);
+  color: var(--forest);
+  border-color: var(--gold);
+  flex: 1;
+}
+
+.btn-block {
+  flex: 1;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--sand-hover);
+}
+
+/* Secondary: quiet outline */
+.btn-secondary {
+  background: var(--card);
+  color: var(--text-body);
+  border-color: var(--input-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--header-tint);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--forest);
+  font-weight: 600;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.btn-link.danger {
+  color: var(--error);
+}
+
+/* ============ Status + notes ============ */
+.status {
+  margin: 12px 0 0;
+  min-height: 1em;
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.status.success {
+  color: var(--forest);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.status.error {
+  color: var(--error);
+  font-style: normal;
+}
+
+.warning {
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  background: #fbf3df;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-body);
+}
+
+/* ============ Preview panel ============ */
+.preview-panel {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--forest-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+}
+
+.preview-summary {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-body);
+}
+
+.preview-table-wrap {
+  margin-top: 8px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.preview-table th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  background: var(--header-tint);
+  color: var(--forest);
+  font-weight: 600;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.preview-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--grid-line);
+  vertical-align: top;
+}
+
+.preview-table tr:last-child td {
+  border-bottom: none;
+}
+
+.cell-add {
+  color: var(--forest);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cell-del {
+  color: var(--error);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ============ Revision summary rows ============ */
+.rev-rows {
+  margin-top: 10px;
+}
+
+.rev-row {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+}
+
+.rev-row-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.rev-row-head .rev-loc {
+  flex: 1;
+}
+
+.rev-row-head .rev-type {
+  width: 108px;
+  flex-shrink: 0;
+}
+
+.rev-del {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.rev-row .rev-desc {
+  margin-top: 6px;
+  resize: vertical;
+  min-height: 44px;
+}
+
+.rev-row .rev-spec {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  resize: vertical;
+  min-height: 40px;
+  max-height: 200px;
+  overflow-y: auto;
+  line-height: 1.4;
+}
+
+.rev-spec-label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 0 2px;
+}
+
+/* ============ Template list ============ */
+.template-list {
+  margin-bottom: 4px;
+}
+
+.template-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--grid-line);
+}
+
+.template-row:last-child {
+  border-bottom: none;
+}
+
+.template-name {
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.template-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.template-actions {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.editor {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.editor-title {
+  margin: 0 0 4px;
+  color: var(--forest);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ============ Thin scrollbar (matches SWE) ============ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-soft) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--forest);
+}

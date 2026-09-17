@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemas.azure.com/static-web-apps/staticwebapp.config.json",
+  "navigationFallback": {
+    "rewrite": "/taskpane.html",
+    "exclude": ["/assets/*", "*.js", "*.css", "*.json", "*.png", "*.map"]
+  },
+  "routes": [
+    {
+      "route": "/manifest.json",
+      "headers": { "Cache-Control": "no-store" }
+    },
+    {
+      "route": "/assets/*",
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" }
+    }
+  ],
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff"
+  },
+  "mimeTypes": {
+    ".json": "application/json"
+  }
+}
