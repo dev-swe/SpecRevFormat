@@ -10,7 +10,7 @@ UI, no per-document VBA importing.
 Pick an **architect template** in the task pane, then click **Format Specification**. Two
 modes, driven by each template's *tag-append* flag (identical rules to the macro):
 
-- **Tag-append mode** (e.g. *Rowell Brokaw Architects*): scans the document, treats each
+- **Tag-append mode** (e.g. *RBA*): scans the document, treats each
   continuous **bold** run as an *addition* and each **bold + strikethrough** run as a
   *deletion*, skips headings, and appends a bold tag (e.g. `(ASI-1)`) after each run.
 - **Reformat mode**: applies heading vs. body fonts/sizes/colors, recolors
@@ -123,7 +123,7 @@ re-hosting `dist/` (push to `main`) and, if the manifest changed, re-sharing `be
 
 ## Verify
 
-Use the sample redline in `C:\Users\elutz\Desktop\Conspectus\`:
+Use the sample redline in `C:\Users...\Conspectus\`:
 `220500 General Plumbing Provisions TC (4).docx` (its `..._format.docx` sibling is the
 macro's own output — a golden reference). Run **Rowell Brokaw** with tag `(ASI-1)` and
 confirm each bold run and each bold+strike run gets a trailing bold `(ASI-1)`.
