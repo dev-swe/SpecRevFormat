@@ -52,6 +52,17 @@ user-picked files in the task pane** (JSZip parses `word/document.xml` in the br
 nothing is uploaded, no new manifest permissions, no network calls. `.pdf` input (which the
 Python tool supports) would require adding pdf.js; the add-in currently handles **.docx**.
 
+To match the firm's house style exactly (Tahoma default, Heading 3 title, cover
+disclaimer, Heading 5 field lines, the ACTION CODES table, forest header shading), the
+output is **built by injecting rows into the real template** `assets/submittal-template.docx`
+rather than rebuilt from scratch — the same template-injection approach the Python tool
+used. The template holds the cover plus the review table's header row and one fully-styled
+prototype data row; each extracted item clones that row (Item No. auto-numbers; Action Code
+and Comments are left blank for the reviewer). To change the house style, edit
+`appPackage/assets/submittal-template.docx` in Word — no code change needed. If the template
+can't be fetched, the add-in falls back to an equivalent from-scratch layout
+(`core/submittalDocx.ts`).
+
 ## Run it (dev / sideload)
 
 Prerequisites: Node 22, Word on Windows or Mac.
@@ -162,7 +173,8 @@ confirm each bold run and each bold+strike run gets a trailing bold `(ASI-1)`.
 - `src/core/store.ts` — template persistence + JSON export/import.
 - `src/core/backup.ts` — the "save a copy first" download.
 - `src/core/submittal.ts` — submittal-item extraction (port of `spec_to_submittal.py`): parses spec `.docx` via JSZip and computes the outline/qualifier rows.
-- `src/core/submittalDocx.ts` — builds + downloads the Submittal Review `.docx` from the extracted rows (uses the `docx` library, like `core/docx.ts`).
+- `src/core/submittalTemplate.ts` — builds the Submittal Review by injecting rows into the bundled template `assets/submittal-template.docx` (JSZip + DOM edits), preserving the firm's exact styling.
+- `src/core/submittalDocx.ts` — fallback: builds the Submittal Review `.docx` from scratch with the `docx` library (used only if the template can't be fetched).
 - `src/taskpane/` — the task pane UI (HTML/CSS + controller).
 - `appPackage/manifest.json` — the add-in manifest.
 

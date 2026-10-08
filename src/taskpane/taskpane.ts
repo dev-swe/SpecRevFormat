@@ -33,6 +33,7 @@ import { exportNarrativeDocx } from "../core/docx";
 import { downloadContribution } from "../core/contribution";
 import { extractFromFile, combineAndSort } from "../core/submittal";
 import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
+import { exportSubmittalFromTemplate } from "../core/submittalTemplate";
 
 let templates: ArchitectTemplate[] = [];
 let editingIndex: number | null = null; // index being edited, or null when adding
@@ -149,7 +150,15 @@ async function onCompileSubmittal(): Promise<void> {
       submittalFiles.length === 1 && items[0].section
         ? `Submittal Review - ${items[0].section}`
         : "Submittal Review - Combined";
-    const name = await exportSubmittalDocx(items, submittalMeta(), fileBase);
+    // Prefer the firm template (exact house style); fall back to the built-in layout
+    // if the bundled template can't be fetched (e.g. offline cache miss).
+    const meta = submittalMeta();
+    let name: string;
+    try {
+      name = await exportSubmittalFromTemplate(items, meta, fileBase);
+    } catch {
+      name = await exportSubmittalDocx(items, meta, fileBase);
+    }
     const note = errors.length ? ` (${errors.length} file(s) skipped)` : "";
     setSubStatus(
       `Compiled ${items.length} item(s) from ${groups.length} spec(s). Downloaded ${name}.${note}`,
