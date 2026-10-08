@@ -71,6 +71,67 @@
             </div>
         </section>
 
+        <!-- ============ Compile submittal table ============ -->
+        <details class="card" id="submittal-card">
+            <summary class="card-header">
+                <span class="card-title">Compile submittal table</span>
+                <span class="chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="card-body">
+                <p class="help">
+                    Pick one or more specification <b>.docx</b> files. Each is scanned for its
+                    <b>PART 2 &mdash; PRODUCTS</b> items and the results are combined into a
+                    <b>Submittal Review (.docx)</b> table, sorted by spec section. Runs entirely in
+                    Word &mdash; nothing is uploaded.
+                </p>
+
+                <div class="button-row">
+                    <button id="sub-pick-btn" class="btn btn-secondary btn-block" type="button">
+                        Choose specification files (.docx)&hellip;
+                    </button>
+                    <input id="sub-files" type="file" accept=".docx" multiple style="display: none;" />
+                </div>
+                <p id="sub-files-list" class="help"></p>
+
+                <div class="grid">
+                    <div>
+                        <label class="field-label" for="sub-submittal">SWE Submittal No.</label>
+                        <input id="sub-submittal" class="control" type="text" placeholder="P08" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="sub-project">Project name</label>
+                        <input id="sub-project" class="control" type="text" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="sub-projectno">SWE Project No.</label>
+                        <input id="sub-projectno" class="control" type="text" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="sub-reviewedby">Reviewed by</label>
+                        <input id="sub-reviewedby" class="control" type="text" />
+                    </div>
+                    <div>
+                        <label class="field-label" for="sub-contractorno">Contractor Submittal No.</label>
+                        <input id="sub-contractorno" class="control" type="text" />
+                    </div>
+                </div>
+
+                <label class="checkbox">
+                    <input id="sub-allparts" type="checkbox" />
+                    <span>Include every Article (Parts 1/2/3), not just Part 2 products</span>
+                </label>
+
+                <div id="sub-preview" class="preview-panel" style="display: none;"></div>
+
+                <div class="button-row">
+                    <button id="sub-compile-btn" class="btn btn-primary btn-block" type="button" disabled>
+                        Compile Submittal Table (.DOCX)
+                    </button>
+                </div>
+                <p id="sub-status" class="status" aria-live="polite"></p>
+            </div>
+        </details>
+
         <!-- ============ Revision summary ============ -->
         <details class="card" id="revision-card">
             <summary class="card-header">

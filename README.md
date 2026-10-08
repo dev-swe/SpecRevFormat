@@ -27,6 +27,31 @@ be shared via **Export / Import** (a JSON file).
   did, so this is the equivalent).
 - All edits run in a single batch, so **one Ctrl+Z** reverts a formatting run.
 
+## Compile submittal table
+
+The **Compile submittal table** panel turns one or more specification sections into a
+**Submittal Review (.docx)** — a port of the `spec_to_submittal.py` tool into the add-in.
+Pick one or more spec **.docx** files; each is scanned for its **PART 2 — PRODUCTS**
+articles and the rows are combined into a single table, sorted by spec section, then
+downloaded. Header fields (project, submittal nos., reviewer) fill the cover block.
+
+How a spec maps to a row (mirrors the script):
+
+| Spec element | Becomes |
+|---|---|
+| `SECTION 22 05 23` | Spec Section line 1: `22 05 23` |
+| PART → Article number | Spec Section line 2: `2.2 A` (computed from the CSI style sequence) |
+| Article heading (`BALL VALVES`) | Item Name line 1: `Ball Valves` |
+| `A. NPS 3 and Smaller` | Item Name line 2: `(NPS < 3)` (`and Smaller`→`<`, `and Larger`→`>`) |
+
+Non-product articles ("General Requirements") and Parts 1/3 are skipped unless **Include
+every Article** is ticked.
+
+Because Office.js can only see the one open document, batch/combine works by **reading
+user-picked files in the task pane** (JSZip parses `word/document.xml` in the browser) —
+nothing is uploaded, no new manifest permissions, no network calls. `.pdf` input (which the
+Python tool supports) would require adding pdf.js; the add-in currently handles **.docx**.
+
 ## Run it (dev / sideload)
 
 Prerequisites: Node 22, Word on Windows or Mac.
@@ -136,6 +161,8 @@ confirm each bold run and each bold+strike run gets a trailing bold `(ASI-1)`.
 - `src/core/format.ts` — the Office.js engine that applies both modes to the live document.
 - `src/core/store.ts` — template persistence + JSON export/import.
 - `src/core/backup.ts` — the "save a copy first" download.
+- `src/core/submittal.ts` — submittal-item extraction (port of `spec_to_submittal.py`): parses spec `.docx` via JSZip and computes the outline/qualifier rows.
+- `src/core/submittalDocx.ts` — builds + downloads the Submittal Review `.docx` from the extracted rows (uses the `docx` library, like `core/docx.ts`).
 - `src/taskpane/` — the task pane UI (HTML/CSS + controller).
 - `appPackage/manifest.json` — the add-in manifest.
 

@@ -3,7 +3,7 @@
  * Wires the picker + template editor to the core formatting engine.
  */
 
-/* global Office, document, Event, HTMLElement, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, setTimeout, clearTimeout */
+/* global Office, document, Event, HTMLElement, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, setTimeout, clearTimeout, File */
 
 import { ArchitectTemplate, newTemplate } from "../core/templates";
 import {
@@ -31,12 +31,15 @@ import {
 } from "../core/revision";
 import { exportNarrativeDocx } from "../core/docx";
 import { downloadContribution } from "../core/contribution";
+import { extractFromFile, combineAndSort } from "../core/submittal";
+import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
 
 let templates: ArchitectTemplate[] = [];
 let editingIndex: number | null = null; // index being edited, or null when adding
 let lastLog: { entries: LogEntry[]; tagText: string } | null = null; // for CSV export
 let summary: RevisionSummary = emptySummary(); // revision-summary table (per document)
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
+let submittalFiles: File[] = []; // specs picked for the submittal-table compiler
 
 function $<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -70,8 +73,119 @@ Office.onReady((info) => {
   $("editor-cancel").addEventListener("click", closeEditor);
   $("editor-save").addEventListener("click", onEditorSave);
 
+  $("sub-pick-btn").addEventListener("click", () => $<HTMLInputElement>("sub-files").click());
+  $<HTMLInputElement>("sub-files").addEventListener("change", onSubmittalFilesPicked);
+  $("sub-compile-btn").addEventListener("click", onCompileSubmittal);
+
   initRevision();
 });
+
+/* ----------------------- Compile submittal table ----------------------- */
+
+function setSubStatus(message: string, kind: "info" | "error" | "success" = "info"): void {
+  const el = $("sub-status");
+  el.textContent = message;
+  el.className = "status " + kind;
+}
+
+function onSubmittalFilesPicked(e: Event): void {
+  const input = e.target as HTMLInputElement;
+  submittalFiles = input.files ? Array.from(input.files) : [];
+  const list = $("sub-files-list");
+  const btn = $<HTMLInputElement>("sub-compile-btn");
+  if (submittalFiles.length === 0) {
+    list.textContent = "";
+    btn.disabled = true;
+    return;
+  }
+  list.textContent =
+    `${submittalFiles.length} file(s): ` + submittalFiles.map((f) => f.name).join(", ");
+  btn.disabled = false;
+  $("sub-preview").style.display = "none";
+  setSubStatus("");
+}
+
+function submittalMeta(): SubmittalMeta {
+  return {
+    project: $<HTMLInputElement>("sub-project").value.trim(),
+    sweProjectNo: $<HTMLInputElement>("sub-projectno").value.trim(),
+    reviewDate: "",
+    reviewedBy: $<HTMLInputElement>("sub-reviewedby").value.trim(),
+    sweSubmittalNo: $<HTMLInputElement>("sub-submittal").value.trim(),
+    contractorSubmittalNo: $<HTMLInputElement>("sub-contractorno").value.trim(),
+  };
+}
+
+async function onCompileSubmittal(): Promise<void> {
+  if (submittalFiles.length === 0) {
+    setSubStatus("Choose at least one .docx specification first.", "error");
+    return;
+  }
+  const btn = $<HTMLInputElement>("sub-compile-btn");
+  const allParts = $<HTMLInputElement>("sub-allparts").checked;
+  btn.disabled = true;
+  setSubStatus(`Scanning ${submittalFiles.length} spec(s)…`);
+  try {
+    const groups = [];
+    const errors: string[] = [];
+    for (const file of submittalFiles) {
+      try {
+        groups.push(await extractFromFile(file, allParts));
+      } catch (err) {
+        errors.push(err instanceof Error ? err.message : String(err));
+      }
+    }
+    const items = combineAndSort(groups);
+    renderSubmittalPreview(items, errors);
+    if (items.length === 0) {
+      setSubStatus(
+        "No product items found. Check that these are MasterSpec sections (SCT/PRT/ART styles), or tick “Include every Article”.",
+        "error"
+      );
+      btn.disabled = false;
+      return;
+    }
+    const fileBase =
+      submittalFiles.length === 1 && items[0].section
+        ? `Submittal Review - ${items[0].section}`
+        : "Submittal Review - Combined";
+    const name = await exportSubmittalDocx(items, submittalMeta(), fileBase);
+    const note = errors.length ? ` (${errors.length} file(s) skipped)` : "";
+    setSubStatus(
+      `Compiled ${items.length} item(s) from ${groups.length} spec(s). Downloaded ${name}.${note}`,
+      "success"
+    );
+  } catch (err) {
+    setSubStatus(err instanceof Error ? err.message : String(err), "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderSubmittalPreview(items: ReturnType<typeof combineAndSort>, errors: string[]): void {
+  const panel = $("sub-preview");
+  const rows = items
+    .map(
+      (it) =>
+        `<tr><td>${esc(it.section)} ${esc(it.outline)}</td><td>${esc(it.name)} ${esc(
+          it.qualifier
+        )}</td></tr>`
+    )
+    .join("");
+  const errHtml = errors.length ? `<p class="warning">${errors.map(esc).join("<br/>")}</p>` : "";
+  const summaryHtml = `<p class="preview-summary">${items.length} item(s) found.</p>`;
+  const tableHtml = rows
+    ? `<div class="preview-table-wrap"><table class="preview-table"><thead><tr><th>Spec Section</th><th>Item Name</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    : "";
+  panel.innerHTML = summaryHtml + tableHtml + errHtml;
+  panel.style.display = "block";
+}
+
+function esc(s: string): string {
+  return s.replace(/[&<>"]/g, (c) =>
+    c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&quot;"
+  );
+}
 
 /* ----------------------------- Format panel ----------------------------- */
 
