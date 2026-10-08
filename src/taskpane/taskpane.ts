@@ -34,6 +34,7 @@ import { downloadContribution } from "../core/contribution";
 import { extractFromFile, combineAndSort } from "../core/submittal";
 import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
 import { exportSubmittalFromTemplate } from "../core/submittalTemplate";
+import { insertSubmittalTable } from "../core/submittalInsert";
 
 let templates: ArchitectTemplate[] = [];
 let editingIndex: number | null = null; // index being edited, or null when adding
@@ -76,7 +77,8 @@ Office.onReady((info) => {
 
   $("sub-pick-btn").addEventListener("click", () => $<HTMLInputElement>("sub-files").click());
   $<HTMLInputElement>("sub-files").addEventListener("change", onSubmittalFilesPicked);
-  $("sub-compile-btn").addEventListener("click", onCompileSubmittal);
+  $("sub-compile-btn").addEventListener("click", () => onSubmittalAction("download"));
+  $("sub-insert-btn").addEventListener("click", () => onSubmittalAction("insert"));
 
   initRevision();
 });
@@ -93,15 +95,15 @@ function onSubmittalFilesPicked(e: Event): void {
   const input = e.target as HTMLInputElement;
   submittalFiles = input.files ? Array.from(input.files) : [];
   const list = $("sub-files-list");
-  const btn = $<HTMLInputElement>("sub-compile-btn");
-  if (submittalFiles.length === 0) {
+  const hasFiles = submittalFiles.length > 0;
+  $<HTMLInputElement>("sub-compile-btn").disabled = !hasFiles;
+  $<HTMLInputElement>("sub-insert-btn").disabled = !hasFiles;
+  if (!hasFiles) {
     list.textContent = "";
-    btn.disabled = true;
     return;
   }
   list.textContent =
     `${submittalFiles.length} file(s): ` + submittalFiles.map((f) => f.name).join(", ");
-  btn.disabled = false;
   $("sub-preview").style.display = "none";
   setSubStatus("");
 }
@@ -117,14 +119,18 @@ function submittalMeta(): SubmittalMeta {
   };
 }
 
-async function onCompileSubmittal(): Promise<void> {
+type SubmittalMode = "download" | "insert";
+
+async function onSubmittalAction(mode: SubmittalMode): Promise<void> {
   if (submittalFiles.length === 0) {
     setSubStatus("Choose at least one .docx specification first.", "error");
     return;
   }
-  const btn = $<HTMLInputElement>("sub-compile-btn");
+  const compileBtn = $<HTMLInputElement>("sub-compile-btn");
+  const insertBtn = $<HTMLInputElement>("sub-insert-btn");
   const allParts = $<HTMLInputElement>("sub-allparts").checked;
-  btn.disabled = true;
+  compileBtn.disabled = true;
+  insertBtn.disabled = true;
   setSubStatus(`Scanning ${submittalFiles.length} spec(s)…`);
   try {
     const groups = [];
@@ -143,31 +149,40 @@ async function onCompileSubmittal(): Promise<void> {
         "No product items found. Check that these are MasterSpec sections (SCT/PRT/ART styles), or tick “Include every Article”.",
         "error"
       );
-      btn.disabled = false;
       return;
     }
-    const fileBase =
-      submittalFiles.length === 1 && items[0].section
-        ? `Submittal Review - ${items[0].section}`
-        : "Submittal Review - Combined";
-    // Prefer the firm template (exact house style); fall back to the built-in layout
-    // if the bundled template can't be fetched (e.g. offline cache miss).
     const meta = submittalMeta();
-    let name: string;
-    try {
-      name = await exportSubmittalFromTemplate(items, meta, fileBase);
-    } catch {
-      name = await exportSubmittalDocx(items, meta, fileBase);
-    }
     const note = errors.length ? ` (${errors.length} file(s) skipped)` : "";
-    setSubStatus(
-      `Compiled ${items.length} item(s) from ${groups.length} spec(s). Downloaded ${name}.${note}`,
-      "success"
-    );
+
+    if (mode === "insert") {
+      await insertSubmittalTable(items, meta);
+      setSubStatus(
+        `Inserted ${items.length} item(s) from ${groups.length} spec(s) into the document.${note}`,
+        "success"
+      );
+    } else {
+      const fileBase =
+        submittalFiles.length === 1 && items[0].section
+          ? `Submittal Review - ${items[0].section}`
+          : "Submittal Review - Combined";
+      // Prefer the firm template (exact house style); fall back to the built-in layout
+      // if the bundled template can't be fetched (e.g. offline cache miss).
+      let name: string;
+      try {
+        name = await exportSubmittalFromTemplate(items, meta, fileBase);
+      } catch {
+        name = await exportSubmittalDocx(items, meta, fileBase);
+      }
+      setSubStatus(
+        `Compiled ${items.length} item(s) from ${groups.length} spec(s). Downloaded ${name}.${note}`,
+        "success"
+      );
+    }
   } catch (err) {
     setSubStatus(err instanceof Error ? err.message : String(err), "error");
   } finally {
-    btn.disabled = false;
+    compileBtn.disabled = false;
+    insertBtn.disabled = false;
   }
 }
 
