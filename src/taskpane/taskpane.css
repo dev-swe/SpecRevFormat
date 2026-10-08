@@ -90,6 +90,51 @@ main {
   padding: 12px;
 }
 
+/* ============ Tabs ============ */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px 0;
+  background: var(--window-bg);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.tab {
+  flex: 1 1 0;
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 9px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--forest);
+  background: var(--header-tint);
+}
+
+.tab.is-active {
+  color: var(--forest);
+  background: var(--card);
+  border-color: var(--border-soft);
+  margin-bottom: -1px;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: -2px;
+}
+
 /* ============ Cards ============ */
 .card {
   background: var(--card);

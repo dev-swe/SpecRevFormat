@@ -33,8 +33,15 @@
     </section>
 
     <main id="app-body" style="display: none;">
+        <!-- ============ Tabs ============ -->
+        <nav class="tabs" role="tablist">
+            <button class="tab is-active" type="button" role="tab" data-tab="format">Format spec</button>
+            <button class="tab" type="button" role="tab" data-tab="submittal">Submittal review</button>
+            <button class="tab" type="button" role="tab" data-tab="templates">Templates</button>
+        </nav>
+
         <!-- ============ Format ============ -->
-        <section class="card">
+        <section class="card" data-group="format">
             <div class="card-header"><span class="card-title">Format document</span></div>
             <div class="card-body">
                 <label class="field-label" for="template-select">Architect template</label>
@@ -72,7 +79,7 @@
         </section>
 
         <!-- ============ Compile submittal table ============ -->
-        <details class="card" id="submittal-card">
+        <details class="card" id="submittal-card" data-group="submittal" open>
             <summary class="card-header">
                 <span class="card-title">Compile submittal table</span>
                 <span class="chevron" aria-hidden="true"></span>
@@ -136,7 +143,7 @@
         </details>
 
         <!-- ============ Revision summary ============ -->
-        <details class="card" id="revision-card">
+        <details class="card" id="revision-card" data-group="format">
             <summary class="card-header">
                 <span class="card-title">Revision summary</span>
                 <span class="chevron" aria-hidden="true"></span>
@@ -199,7 +206,7 @@
         </details>
 
         <!-- ============ Templates ============ -->
-        <details class="card" id="templates-card">
+        <details class="card" id="templates-card" data-group="templates" open>
             <summary class="card-header">
                 <span class="card-title">Templates</span>
                 <span class="chevron" aria-hidden="true"></span>

@@ -80,8 +80,28 @@ Office.onReady((info) => {
   $("sub-compile-btn").addEventListener("click", () => onSubmittalAction("download"));
   $("sub-insert-btn").addEventListener("click", () => onSubmittalAction("insert"));
 
+  initTabs();
   initRevision();
 });
+
+/* -------------------------------- Tabs -------------------------------- */
+
+function initTabs(): void {
+  const tabs = document.querySelectorAll<HTMLElement>(".tab");
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => activateTab(tab.dataset.tab || "format"))
+  );
+  activateTab("format");
+}
+
+function activateTab(name: string): void {
+  document.querySelectorAll<HTMLElement>(".tab").forEach((tab) => {
+    tab.classList.toggle("is-active", tab.dataset.tab === name);
+  });
+  document.querySelectorAll<HTMLElement>(".card[data-group]").forEach((card) => {
+    card.style.display = card.dataset.group === name ? "" : "none";
+  });
+}
 
 /* ----------------------- Compile submittal table ----------------------- */
 
