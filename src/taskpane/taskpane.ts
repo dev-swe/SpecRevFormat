@@ -119,6 +119,7 @@ async function onExtractOpenDoc(): Promise<void> {
   const btn = $<HTMLInputElement>("ex-extract-btn");
   const clearBtn = $<HTMLInputElement>("ex-clear-btn");
   const allParts = $<HTMLInputElement>("ex-allparts").checked;
+  const fullSub = $<HTMLInputElement>("ex-fullsub").checked;
   const highlight = $<HTMLInputElement>("ex-highlight").checked;
   btn.disabled = true;
   clearBtn.disabled = true;
@@ -126,7 +127,7 @@ async function onExtractOpenDoc(): Promise<void> {
   try {
     const bytes = await readDocumentBytes();
     const name = documentFileName();
-    const items = await extractFromDocx(bytes, name, allParts);
+    const items = await extractFromDocx(bytes, name, allParts, fullSub);
     renderItemsPreview($("ex-preview"), items);
     if (items.length === 0) {
       setExStatus(
@@ -213,6 +214,7 @@ async function onSubmittalAction(mode: SubmittalMode): Promise<void> {
   const compileBtn = $<HTMLInputElement>("sub-compile-btn");
   const insertBtn = $<HTMLInputElement>("sub-insert-btn");
   const allParts = $<HTMLInputElement>("sub-allparts").checked;
+  const fullSub = $<HTMLInputElement>("sub-fullsub").checked;
   compileBtn.disabled = true;
   insertBtn.disabled = true;
   setSubStatus(`Scanning ${submittalFiles.length} spec(s)…`);
@@ -221,7 +223,7 @@ async function onSubmittalAction(mode: SubmittalMode): Promise<void> {
     const errors: string[] = [];
     for (const file of submittalFiles) {
       try {
-        groups.push(await extractFromFile(file, allParts));
+        groups.push(await extractFromFile(file, allParts, fullSub));
       } catch (err) {
         errors.push(err instanceof Error ? err.message : String(err));
       }

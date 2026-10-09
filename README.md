@@ -53,6 +53,9 @@ How a spec maps to a row (mirrors the script):
 | Article heading (`BALL VALVES`) | Item Name line 1: `Ball Valves` |
 | `A. NPS 3 and Smaller` | Item Name line 2: `(NPS < 3)` (`and Smaller`→`<`, `and Larger`→`>`) |
 
+Tick **Use the full subheading text** (on either card) to keep the complete subheading that
+follows the A./B. letter verbatim — `NPS 3 and Smaller` — instead of the abbreviated `(NPS < 3)`.
+
 Non-product articles ("General Requirements") and Parts 1/3 are skipped unless **Include
 every Article** is ticked.
 

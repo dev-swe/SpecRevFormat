@@ -150,11 +150,18 @@ const LEVEL: Record<string, string | number> = {
   PR5: 5,
 };
 
-/** Read a .docx File/Blob/ArrayBuffer and return its extracted submittal rows. */
+/**
+ * Read a .docx File/Blob/ArrayBuffer and return its extracted submittal rows.
+ *
+ * `fullSubheading` controls the Item Name's second line: when false (default) it is the
+ * abbreviated qualifier ("NPS 3 and Smaller" -> "(NPS < 3)"); when true it is the complete
+ * subheading text that follows the A./B. letter ("NPS 3 and Smaller"), verbatim.
+ */
 export async function extractFromDocx(
   data: ArrayBuffer | Uint8Array | Blob,
   sourceName: string,
-  allParts: boolean
+  allParts: boolean,
+  fullSubheading = false
 ): Promise<SubmittalItem[]> {
   const zip = await JSZip.loadAsync(data as ArrayBuffer);
   const docFile = zip.file("word/document.xml");
@@ -197,7 +204,11 @@ export async function extractFromDocx(
       letter += 1;
       if (!(allParts || curIsProduct)) continue;
       const outline = `${part}.${art} ${String.fromCharCode(64 + letter)}`;
-      const qualifier = looksLikeSize(text) ? makeQualifier(text) : "";
+      const qualifier = fullSubheading
+        ? clean(text).replace(/:+\s*$/, "")
+        : looksLikeSize(text)
+          ? makeQualifier(text)
+          : "";
       items.push({ section, outline, name: curArtName, qualifier, source: sourceName });
     }
   }
@@ -208,13 +219,17 @@ export async function extractFromDocx(
 }
 
 /** Read a user-picked File (.docx) into submittal rows. */
-export async function extractFromFile(file: File, allParts: boolean): Promise<SubmittalItem[]> {
+export async function extractFromFile(
+  file: File,
+  allParts: boolean,
+  fullSubheading = false
+): Promise<SubmittalItem[]> {
   const lower = file.name.toLowerCase();
   if (!lower.endsWith(".docx")) {
     throw new Error(`${file.name}: only .docx is supported in the add-in (PDF needs pdf.js).`);
   }
   const buf = await file.arrayBuffer();
-  return extractFromDocx(buf, file.name, allParts);
+  return extractFromDocx(buf, file.name, allParts, fullSubheading);
 }
 
 /* ------------------------------- combine / sort ------------------------------- */
