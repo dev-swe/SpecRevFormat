@@ -150,6 +150,22 @@ export async function embedSpecLinkInBlob(blob: Blob, payload: SpecLinkPayload):
 
 /* -------------------------------- reading -------------------------------- */
 
+/** The custom XML namespace the spec-link part uses (for Office.js getByNamespaceAsync). */
+export const SPEC_LINK_NS = NS;
+
+/** Parse the spec-link part's XML (from JSZip or Office.js getXmlAsync) into a payload. */
+export function parseSpecLinkXml(xml: string): SpecLinkPayload | null {
+  if (!xml || !xml.includes(NS) || !xml.includes("specLink")) return null;
+  const dom = new DOMParser().parseFromString(xml, "application/xml");
+  const root = dom.documentElement;
+  const jsonText = root ? root.textContent || "" : "";
+  try {
+    return JSON.parse(jsonText) as SpecLinkPayload;
+  } catch {
+    return null;
+  }
+}
+
 /** Read the spec-link payload from a .docx's bytes, or null if none is embedded. */
 export async function readSpecLink(
   data: ArrayBuffer | Uint8Array | Blob
@@ -157,16 +173,8 @@ export async function readSpecLink(
   const zip = await JSZip.loadAsync(data as ArrayBuffer);
   const names = Object.keys(zip.files).filter((f) => /^customXml\/item\d+\.xml$/.test(f));
   for (const name of names) {
-    const xml = await zip.file(name)!.async("string");
-    if (!xml.includes(NS) || !xml.includes("specLink")) continue;
-    const dom = new DOMParser().parseFromString(xml, "application/xml");
-    const root = dom.documentElement;
-    const jsonText = root ? root.textContent || "" : "";
-    try {
-      return JSON.parse(jsonText) as SpecLinkPayload;
-    } catch {
-      return null;
-    }
+    const payload = parseSpecLinkXml(await zip.file(name)!.async("string"));
+    if (payload) return payload;
   }
   return null;
 }

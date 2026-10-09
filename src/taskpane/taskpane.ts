@@ -37,7 +37,13 @@ import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
 import { exportSubmittalFromTemplate } from "../core/submittalTemplate";
 import { insertSubmittalTable } from "../core/submittalInsert";
 import { highlightProductItems, clearProductHighlights } from "../core/submittalHighlight";
-import { buildSpecLinkPayload, readSpecLink, SpecLinkPayload } from "../core/specLink";
+import {
+  buildSpecLinkPayload,
+  readSpecLink,
+  parseSpecLinkXml,
+  SPEC_LINK_NS,
+  SpecLinkPayload,
+} from "../core/specLink";
 
 let templates: ArchitectTemplate[] = [];
 let editingIndex: number | null = null; // index being edited, or null when adding
@@ -96,12 +102,58 @@ Office.onReady((info) => {
 
 async function initSpecLink(): Promise<void> {
   try {
-    const bytes = await readDocumentBytes();
-    const payload = await readSpecLink(bytes);
-    renderSpecLink(payload);
+    renderSpecLink(await detectSpecLink());
   } catch {
     renderSpecLink(null);
   }
+}
+
+/**
+ * Detect the embedded spec link cheaply. Prefer the Office.js custom-XML datastore
+ * (getByNamespaceAsync + getXmlAsync) so we read only the small part, never the whole
+ * open document. Fall back to reading the document's bytes only when that API is
+ * unavailable/errors, or (as a safety net) when it finds nothing but the file looks like
+ * a review. This avoids reading a large source spec's bytes on every add-in open.
+ */
+function detectSpecLink(): Promise<SpecLinkPayload | null> {
+  return new Promise((resolve) => {
+    const viaBytes = () =>
+      readDocumentBytes()
+        .then(readSpecLink)
+        .then(resolve)
+        .catch(() => resolve(null));
+
+    let parts: Office.CustomXmlParts | null = null;
+    try {
+      parts = Office.context.document.customXmlParts;
+    } catch {
+      parts = null;
+    }
+    if (!parts || typeof parts.getByNamespaceAsync !== "function") {
+      viaBytes();
+      return;
+    }
+    parts.getByNamespaceAsync(SPEC_LINK_NS, (res) => {
+      if (res.status !== Office.AsyncResultStatus.Succeeded) {
+        viaBytes();
+        return;
+      }
+      const list = res.value || [];
+      if (list.length === 0) {
+        // Trust the datastore for non-review files; double-check a review-named file.
+        if (/submittal review/i.test(documentFileName())) viaBytes();
+        else resolve(null);
+        return;
+      }
+      list[0].getXmlAsync((xres) => {
+        if (xres.status === Office.AsyncResultStatus.Succeeded && typeof xres.value === "string") {
+          resolve(parseSpecLinkXml(xres.value));
+        } else {
+          viaBytes();
+        }
+      });
+    });
+  });
 }
 
 function renderSpecLink(payload: SpecLinkPayload | null): void {
@@ -407,13 +459,22 @@ async function onSubmittalAction(mode: SubmittalMode): Promise<void> {
   insertBtn.disabled = true;
   setSubStatus(`Scanning ${submittalFiles.length} spec(s)…`);
   try {
+    // Parse all picked specs in parallel (big win for 20+ files) while keeping order.
+    const settled = await Promise.all(
+      submittalFiles.map((file) =>
+        extractFromFile(file, allParts, fullSub).then(
+          (items) => ({ items }),
+          (err) => ({ error: err instanceof Error ? err.message : String(err) })
+        )
+      )
+    );
     const groups = [];
     const errors: string[] = [];
-    for (const file of submittalFiles) {
-      try {
-        groups.push(await extractFromFile(file, allParts, fullSub));
-      } catch (err) {
-        errors.push(err instanceof Error ? err.message : String(err));
+    for (const r of settled) {
+      if ("items" in r) {
+        groups.push(r.items);
+      } else {
+        errors.push(r.error);
       }
     }
     const items = combineAndSort(groups);
