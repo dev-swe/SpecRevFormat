@@ -47,6 +47,16 @@ its full specification section — in a **popup window** (Office Dialog API, `sr
 has room to read; it falls back to an inline panel if the Dialog API is unavailable. The data
 rides inside the review document and is read back from its own bytes, with no need for the
 original file.
+
+**Update from a revised spec.** When a spec is reissued, open the linked review and pick the
+revised `.docx`(s) under the Specification link card. The add-in diffs the revised items
+against the baseline stored in the link (`core/specDiff.ts`, matching on section + product
+name + qualifier, since outline numbers shift) and shows what changed. **Apply** updates the
+open table in place (`core/submittalUpdate.ts`), preserving Action Codes / Comments: added
+items are appended bold, deleted items go gray + strikethrough with a note, changed items are
+flagged bold for re-review, renumbered items get their outline fixed, and carried-over items
+go gray — matching the template's Bold/Gray legend. The embedded link is then re-written to
+the revised content (payload v2 also stores the extraction options so re-extraction lines up).
 - **Compile submittal table** — pick one or more spec **.docx** files; each is scanned and
   the rows are **combined** into a single table, sorted by spec section. Output goes to a
   **Submittal Review (.docx)** download (full house style via template injection) or is
@@ -199,6 +209,8 @@ confirm each bold run and each bold+strike run gets a trailing bold `(ASI-1)`.
 - `src/core/submittalInsert.ts` — inserts the compiled table into the open document at the cursor (Office.js).
 - `src/core/submittalHighlight.ts` — highlights (and clears) the extracted product elements in the open document (Office.js).
 - `src/core/specLink.ts` — embeds the review→spec association (each item's source Article block) into the exported .docx as a Word Custom XML part, and reads it back from the document's bytes.
+- `src/core/specDiff.ts` — pure diff of a revised spec's items vs the linked baseline (added / deleted / changed / renumbered / unchanged).
+- `src/core/submittalUpdate.ts` — applies the diff to the open review table in place (Office.js) and re-embeds the refreshed link.
 - `src/dialog/` — the Specification Section popup (Office Dialog): `specsection.html` + `specsection.ts`.
 - `src/taskpane/` — the task pane UI (HTML/CSS + controller).
 - `appPackage/manifest.json` — the add-in manifest.

@@ -90,6 +90,33 @@
                 <p class="help" id="speclink-note"></p>
                 <div id="speclink-list" class="speclink-list"></div>
                 <div id="speclink-detail" class="preview-panel" style="display: none;"></div>
+
+                <hr class="divider" />
+                <p class="help">
+                    <b>Spec revised?</b> Pick the updated specification file(s) to see what changed
+                    and update this table in place &mdash; added, deleted, changed, and renumbered
+                    items, keeping your Action Codes and Comments.
+                </p>
+                <div class="grid">
+                    <div>
+                        <label class="field-label" for="upd-submittal">Revision submittal no.</label>
+                        <input id="upd-submittal" class="control" type="text" placeholder="P09" />
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button id="upd-pick-btn" class="btn btn-secondary btn-block" type="button">
+                        Update from revised spec&hellip;
+                    </button>
+                    <input id="upd-files" type="file" accept=".docx" multiple style="display: none;" />
+                </div>
+                <p id="upd-files-list" class="help"></p>
+                <div id="upd-diff" class="preview-panel" style="display: none;"></div>
+                <div class="button-row" id="upd-apply-row" style="display: none;">
+                    <button id="upd-apply-btn" class="btn btn-primary btn-block" type="button">
+                        Apply changes to review
+                    </button>
+                </div>
+                <p id="upd-status" class="status" aria-live="polite"></p>
             </div>
         </section>
 

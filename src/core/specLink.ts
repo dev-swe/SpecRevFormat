@@ -29,17 +29,47 @@ export interface SpecLinkItem {
   section: string;
   outline: string;
   itemName: string;
+  name: string; // stable product name, e.g. "Ball Valves" (v2)
+  qualifier: string; // size/variant, e.g. "(NPS < 3)" (v2)
   artIndex: number; // index into articles[]
+}
+export interface SpecLinkOptions {
+  allParts: boolean;
+  fullSubheading: boolean;
 }
 export interface SpecLinkPayload {
   version: number;
   specName: string;
+  options: SpecLinkOptions; // extraction settings used to build the review (v2)
   articles: SpecLinkArticle[];
   items: SpecLinkItem[];
 }
 
+const DEFAULT_OPTIONS: SpecLinkOptions = { allParts: false, fullSubheading: false };
+
+/**
+ * Normalize a payload read from a document: fill v2 fields that a v1 review lacks, so the
+ * revision diff can always rely on `name` / `qualifier` / `options`.
+ */
+export function normalizeSpecLink(p: SpecLinkPayload): SpecLinkPayload {
+  const options = p.options || DEFAULT_OPTIONS;
+  const items = (p.items || []).map((it) => {
+    if (it.name) return it;
+    // Derive name/qualifier from a v1 itemName: "Name (qualifier)" -> split; else all name.
+    const m = /^(.*?)\s*(\([^)]*\))\s*$/.exec(it.itemName || "");
+    const name = (m ? m[1] : it.itemName || "").trim();
+    const qualifier = m ? m[2] : "";
+    return { ...it, name, qualifier };
+  });
+  return { ...p, options, items };
+}
+
 /** Build the payload from extracted items, de-duplicating shared Article blocks. */
-export function buildSpecLinkPayload(items: SubmittalItem[], specName: string): SpecLinkPayload {
+export function buildSpecLinkPayload(
+  items: SubmittalItem[],
+  specName: string,
+  options: SpecLinkOptions = DEFAULT_OPTIONS
+): SpecLinkPayload {
   const articles: SpecLinkArticle[] = [];
   const indexByKey = new Map<string, number>();
   const outItems: SpecLinkItem[] = items.map((it) => {
@@ -53,9 +83,16 @@ export function buildSpecLinkPayload(items: SubmittalItem[], specName: string): 
       indexByKey.set(key, idx);
     }
     const itemName = it.qualifier ? `${it.name} ${it.qualifier}` : it.name;
-    return { section: it.section, outline: it.outline, itemName, artIndex: idx };
+    return {
+      section: it.section,
+      outline: it.outline,
+      itemName,
+      name: it.name,
+      qualifier: it.qualifier,
+      artIndex: idx,
+    };
   });
-  return { version: 1, specName, articles, items: outItems };
+  return { version: 2, specName, options, articles, items: outItems };
 }
 
 /* ------------------------------- embedding ------------------------------- */
@@ -76,15 +113,23 @@ function guid(): string {
   });
 }
 
+/**
+ * The custom XML part's root element XML, carrying the JSON payload. Shared by the zip
+ * embed (addSpecLinkToZip) and the Office.js re-embed (customXmlParts.add).
+ */
+export function specLinkItemXml(payload: SpecLinkPayload): string {
+  return (
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n` +
+    `<specLink xmlns="${NS}">${xmlEscape(JSON.stringify(payload))}</specLink>`
+  );
+}
+
 /** Add our Custom XML Data part (+ props, rels, content-type, document rel) to a zip. */
 export async function addSpecLinkToZip(zip: JSZip, payload: SpecLinkPayload): Promise<void> {
   let n = 1;
   while (zip.file(`customXml/item${n}.xml`)) n += 1;
 
-  const json = JSON.stringify(payload);
-  const itemXml =
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n` +
-    `<specLink xmlns="${NS}">${xmlEscape(json)}</specLink>`;
+  const itemXml = specLinkItemXml(payload);
   const propsXml =
     `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n` +
     `<ds:datastoreItem ds:itemID="{${guid()}}" ` +
@@ -160,7 +205,7 @@ export function parseSpecLinkXml(xml: string): SpecLinkPayload | null {
   const root = dom.documentElement;
   const jsonText = root ? root.textContent || "" : "";
   try {
-    return JSON.parse(jsonText) as SpecLinkPayload;
+    return normalizeSpecLink(JSON.parse(jsonText) as SpecLinkPayload);
   } catch {
     return null;
   }

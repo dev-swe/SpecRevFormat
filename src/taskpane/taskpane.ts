@@ -41,9 +41,12 @@ import {
   buildSpecLinkPayload,
   readSpecLink,
   parseSpecLinkXml,
+  specLinkItemXml,
   SPEC_LINK_NS,
   SpecLinkPayload,
 } from "../core/specLink";
+import { diffRevision, RevisionDiff } from "../core/specDiff";
+import { applyRevisionToTable, reembedSpecLink } from "../core/submittalUpdate";
 
 let templates: ArchitectTemplate[] = [];
 let editingIndex: number | null = null; // index being edited, or null when adding
@@ -52,6 +55,9 @@ let summary: RevisionSummary = emptySummary(); // revision-summary table (per do
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
 let submittalFiles: File[] = []; // specs picked for the submittal-table compiler
 let extractedItems: SubmittalItem[] = []; // rows from the open document, for editing/export
+let linkedPayload: SpecLinkPayload | null = null; // the open review's embedded spec link
+let updFiles: File[] = []; // revised spec files picked for the revision update
+let lastDiff: RevisionDiff | null = null; // computed revision diff awaiting apply
 
 function $<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -88,6 +94,9 @@ Office.onReady((info) => {
   $("ex-extract-btn").addEventListener("click", onExtractOpenDoc);
   $("ex-clear-btn").addEventListener("click", onClearHighlights);
   $("ex-export-btn").addEventListener("click", onExportEdited);
+  $("upd-pick-btn").addEventListener("click", () => $<HTMLInputElement>("upd-files").click());
+  $<HTMLInputElement>("upd-files").addEventListener("change", onUpdFilesPicked);
+  $("upd-apply-btn").addEventListener("click", onApplyRevision);
   $("sub-pick-btn").addEventListener("click", () => $<HTMLInputElement>("sub-files").click());
   $<HTMLInputElement>("sub-files").addEventListener("change", onSubmittalFilesPicked);
   $("sub-compile-btn").addEventListener("click", () => onSubmittalAction("download"));
@@ -157,6 +166,7 @@ function detectSpecLink(): Promise<SpecLinkPayload | null> {
 }
 
 function renderSpecLink(payload: SpecLinkPayload | null): void {
+  linkedPayload = payload;
   const card = $("speclink-card");
   if (!payload || payload.items.length === 0) {
     card.dataset.hidden = "true";
@@ -246,6 +256,123 @@ function renderSectionInline(data: SectionMessage): void {
       data.itemName
     )}</p>` + `<pre class="speclink-pre">${esc(data.text || "(section text not found)")}</pre>`;
   detail.style.display = "block";
+}
+
+/* ----------------- Update review from a revised spec ----------------- */
+
+function setUpdStatus(message: string, kind: "info" | "error" | "success" = "info"): void {
+  const el = $("upd-status");
+  el.textContent = message;
+  el.className = "status " + kind;
+}
+
+async function onUpdFilesPicked(e: Event): Promise<void> {
+  const input = e.target as HTMLInputElement;
+  updFiles = input.files ? Array.from(input.files) : [];
+  lastDiff = null;
+  $("upd-apply-row").style.display = "none";
+  $("upd-diff").style.display = "none";
+  const list = $("upd-files-list");
+  if (updFiles.length === 0) {
+    list.textContent = "";
+    return;
+  }
+  list.textContent = `${updFiles.length} file(s): ` + updFiles.map((f) => f.name).join(", ");
+  if (!linkedPayload) {
+    setUpdStatus("This document has no embedded spec link to compare against.", "error");
+    return;
+  }
+  setUpdStatus(`Scanning ${updFiles.length} revised spec(s)…`);
+  try {
+    const opts = linkedPayload.options;
+    const settled = await Promise.all(
+      updFiles.map((file) =>
+        extractFromFile(file, opts.allParts, opts.fullSubheading).then(
+          (items) => ({ items }),
+          (err) => ({ error: err instanceof Error ? err.message : String(err) })
+        )
+      )
+    );
+    const revised = [];
+    const errors: string[] = [];
+    for (const r of settled) {
+      if ("items" in r) revised.push(...r.items);
+      else errors.push(r.error);
+    }
+    lastDiff = diffRevision(linkedPayload, revised);
+    renderDiff(lastDiff, errors);
+    const changes =
+      lastDiff.counts.added +
+      lastDiff.counts.deleted +
+      lastDiff.counts.changed +
+      lastDiff.counts.renumbered;
+    $("upd-apply-row").style.display = changes > 0 ? "" : "none";
+    const note = errors.length ? ` (${errors.length} file(s) skipped)` : "";
+    setUpdStatus(
+      changes > 0
+        ? `+${lastDiff.counts.added} added, −${lastDiff.counts.deleted} deleted, ` +
+            `${lastDiff.counts.changed} changed, ${lastDiff.counts.renumbered} renumbered.${note}`
+        : `No changes found in the revised spec(s).${note}`,
+      "success"
+    );
+  } catch (err) {
+    setUpdStatus(err instanceof Error ? err.message : String(err), "error");
+  }
+}
+
+function renderDiff(diff: RevisionDiff, errors: string[]): void {
+  const panel = $("upd-diff");
+  const shown = diff.rows.filter((r) => r.status !== "unchanged");
+  const rows = shown
+    .map((r) => {
+      const outline =
+        r.status === "renumbered"
+          ? `${esc(r.oldOutline || "")}→${esc(r.newOutline || "")}`
+          : esc(r.newOutline || r.oldOutline || "");
+      return (
+        `<div class="diff-row"><span class="diff-badge diff-${r.status}">${r.status}</span>` +
+        `<span>${esc(r.section)} ${outline} — ${esc(r.itemName)}</span></div>`
+      );
+    })
+    .join("");
+  const errHtml = errors.length ? `<p class="warning">${errors.map(esc).join("<br/>")}</p>` : "";
+  panel.innerHTML =
+    `<p class="preview-summary">${shown.length} change(s); ${diff.counts.unchanged} unchanged.</p>` +
+    rows +
+    errHtml;
+  panel.style.display = "block";
+}
+
+async function onApplyRevision(): Promise<void> {
+  if (!lastDiff || !linkedPayload) {
+    setUpdStatus("Pick a revised spec first.", "error");
+    return;
+  }
+  const btn = $<HTMLInputElement>("upd-apply-btn");
+  btn.disabled = true;
+  setUpdStatus("Updating the review table…");
+  try {
+    const revSubmittalNo = $<HTMLInputElement>("upd-submittal").value.trim();
+    const res = await applyRevisionToTable(lastDiff, revSubmittalNo);
+    const specName = updFiles.length === 1 ? updFiles[0].name : linkedPayload.specName;
+    const newPayload = buildSpecLinkPayload(lastDiff.merged, specName, linkedPayload.options);
+    await reembedSpecLink(specLinkItemXml(newPayload));
+    renderSpecLink(newPayload); // refresh the link list with the revised items
+    lastDiff = null;
+    updFiles = [];
+    $("upd-apply-row").style.display = "none";
+    $("upd-diff").style.display = "none";
+    $("upd-files-list").textContent = "";
+    setUpdStatus(
+      `Updated: +${res.added} added, −${res.deleted} deleted, ${res.changed} changed, ` +
+        `${res.renumbered} renumbered. Save the document to keep the changes and the link.`,
+      "success"
+    );
+  } catch (err) {
+    setUpdStatus(err instanceof Error ? err.message : String(err), "error");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 /* -------------------------------- Tabs -------------------------------- */
@@ -393,7 +520,10 @@ async function onExportEdited(): Promise<void> {
       sweSubmittalNo: "",
       contractorSubmittalNo: "",
     };
-    const specLink = buildSpecLinkPayload(items, documentFileName());
+    const specLink = buildSpecLinkPayload(items, documentFileName(), {
+      allParts: $<HTMLInputElement>("ex-allparts").checked,
+      fullSubheading: $<HTMLInputElement>("ex-fullsub").checked,
+    });
     let name: string;
     try {
       name = await exportSubmittalFromTemplate(items, meta, fileBase, specLink);
@@ -504,7 +634,7 @@ async function onSubmittalAction(mode: SubmittalMode): Promise<void> {
         submittalFiles.length === 1
           ? submittalFiles[0].name
           : `${submittalFiles.length} specifications`;
-      const specLink = buildSpecLinkPayload(items, specName);
+      const specLink = buildSpecLinkPayload(items, specName, { allParts, fullSubheading: fullSub });
       // Prefer the firm template (exact house style); fall back to the built-in layout
       // if the bundled template can't be fetched (e.g. offline cache miss).
       let name: string;

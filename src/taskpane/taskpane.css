@@ -470,6 +470,54 @@ input.control.color {
   color: var(--text-body);
 }
 
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  margin: 14px 0;
+}
+
+.diff-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--grid-line);
+}
+
+.diff-badge {
+  flex-shrink: 0;
+  min-width: 68px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.diff-added {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.diff-deleted {
+  background: #fde8e8;
+  color: #a4262c;
+  text-decoration: line-through;
+}
+
+.diff-changed {
+  background: #fff3cd;
+  color: #8a6d00;
+}
+
+.diff-renumbered {
+  background: var(--forest-soft);
+  color: var(--forest);
+}
+
 .cell-add {
   color: var(--forest);
   font-weight: 600;
