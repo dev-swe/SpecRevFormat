@@ -63,13 +63,51 @@
             padding: 16px 18px;
         }
 
-        pre {
-            margin: 0;
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-family: "Cascadia Code", Consolas, "Courier New", monospace;
-            font-size: 13px;
-            color: var(--text-body);
+        .section-body {
+            max-width: 780px;
+        }
+
+        /* Article heading (e.g. "2.2 BALL VALVES") */
+        .lvl0 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--forest);
+            margin: 2px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid var(--forest-soft);
+            text-transform: capitalize;
+        }
+
+        /* PR1 size subheading (e.g. "A. NPS 3 and Smaller:") */
+        .lvl1 {
+            font-weight: 600;
+            margin: 14px 0 4px;
+        }
+
+        .lvl2 {
+            margin: 3px 0 3px 22px;
+        }
+
+        .lvl3 {
+            margin: 2px 0 2px 44px;
+            color: #475569;
+        }
+
+        .lvl4 {
+            margin: 2px 0 2px 66px;
+            color: var(--muted);
+        }
+
+        /* Outline marker: A. / 1. / a. */
+        .mk {
+            color: var(--forest);
+            font-weight: 700;
+            margin-right: 2px;
+        }
+
+        .lvl2 .mk, .lvl3 .mk {
+            color: var(--muted);
+            font-weight: 600;
         }
 
         .empty {
@@ -86,7 +124,7 @@
             <h1 id="title">Specification Section</h1>
         </header>
         <main>
-            <pre id="body"><span class="empty">Loading…</span></pre>
+            <div id="body" class="section-body"><span class="empty">Loading…</span></div>
         </main>
     </div>
 </body>
