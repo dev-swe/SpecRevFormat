@@ -30,6 +30,7 @@ import {
   HeadingLevel,
 } from "docx";
 import { SubmittalItem } from "./submittal";
+import { SpecLinkPayload, embedSpecLinkInBlob } from "./specLink";
 
 const FOREST = "12413C";
 const GRID = "D7DEE5";
@@ -193,9 +194,11 @@ function buildDoc(items: SubmittalItem[], meta: SubmittalMeta): Document {
 export async function exportSubmittalDocx(
   items: SubmittalItem[],
   meta: SubmittalMeta,
-  fileBase: string
+  fileBase: string,
+  specLink?: SpecLinkPayload
 ): Promise<string> {
-  const blob = await Packer.toBlob(buildDoc(items, meta));
+  let blob = await Packer.toBlob(buildDoc(items, meta));
+  if (specLink) blob = await embedSpecLinkInBlob(blob, specLink);
   const url = URL.createObjectURL(blob);
   const safe = (fileBase || "Submittal Review").replace(/[^A-Za-z0-9 ._-]+/g, "-").trim();
   const fileName = `${safe}.docx`;

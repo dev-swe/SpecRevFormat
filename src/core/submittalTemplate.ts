@@ -19,6 +19,7 @@
 import JSZip from "jszip";
 import { SubmittalItem } from "./submittal";
 import { SubmittalMeta } from "./submittalDocx";
+import { SpecLinkPayload, addSpecLinkToZip } from "./specLink";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const XML_NS = "http://www.w3.org/XML/1998/namespace";
@@ -189,7 +190,8 @@ export async function fetchTemplate(url: string = TEMPLATE_URL): Promise<ArrayBu
 export async function buildFromTemplate(
   templateBytes: ArrayBuffer,
   items: SubmittalItem[],
-  meta: SubmittalMeta
+  meta: SubmittalMeta,
+  specLink?: SpecLinkPayload
 ): Promise<Blob> {
   const zip = await JSZip.loadAsync(templateBytes);
   const docFile = zip.file("word/document.xml");
@@ -202,6 +204,7 @@ export async function buildFromTemplate(
 
   const out = new XMLSerializer().serializeToString(doc);
   zip.file("word/document.xml", out);
+  if (specLink) await addSpecLinkToZip(zip, specLink);
   return zip.generateAsync({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -213,10 +216,11 @@ export async function exportSubmittalFromTemplate(
   items: SubmittalItem[],
   meta: SubmittalMeta,
   fileBase: string,
+  specLink?: SpecLinkPayload,
   templateUrl: string = TEMPLATE_URL
 ): Promise<string> {
   const bytes = await fetchTemplate(templateUrl);
-  const blob = await buildFromTemplate(bytes, items, meta);
+  const blob = await buildFromTemplate(bytes, items, meta, specLink);
   const url = URL.createObjectURL(blob);
   const safe = (fileBase || "Submittal Review").replace(/[^A-Za-z0-9 ._-]+/g, "-").trim();
   const fileName = `${safe}.docx`;

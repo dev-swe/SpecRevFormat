@@ -437,6 +437,39 @@ input.control.color {
   border-color: var(--forest);
 }
 
+.speclink-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.speclink-item {
+  text-align: left;
+  font: inherit;
+  color: var(--forest);
+  background: var(--forest-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.speclink-item:hover {
+  background: var(--header-tint);
+  border-color: var(--forest);
+}
+
+.speclink-pre {
+  margin: 0;
+  max-height: 300px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 11px;
+  color: var(--text-body);
+}
+
 .cell-add {
   color: var(--forest);
   font-weight: 600;

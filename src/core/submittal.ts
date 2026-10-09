@@ -29,6 +29,8 @@ export interface SubmittalItem {
   name: string; // "Ball Valves"
   qualifier: string; // "(NPS < 3)"  (may be "")
   source: string; // originating file name
+  specTitle?: string; // "2.2 BALL VALVES" — the source Article heading (for the spec link)
+  specText?: string; // the full Article block text (for the spec link)
 }
 
 const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -179,9 +181,18 @@ export async function extractFromDocx(
   let part = 0; // 1=GENERAL, 2=PRODUCTS, 3=EXECUTION
   let art = 0;
   let letter = 0; // PR1 counter within an article
+  let pr2 = 0;
+  let pr3 = 0;
   let curArtName = "";
   let curIsProduct = false;
   const items: SubmittalItem[] = [];
+
+  // Per-article block capture (for the spec link): the Article heading + a readable
+  // outline reconstruction of its paragraphs. Items point at their article's block so
+  // specText can be filled once the article is complete.
+  type Block = { title: string; lines: string[] };
+  let curBlock: Block | null = null;
+  const blockOf: Block[] = []; // parallel to items
 
   for (let i = 0; i < paras.length; i++) {
     const p = paras[i];
@@ -198,19 +209,48 @@ export async function extractFromDocx(
     } else if (level === "ART") {
       art += 1;
       letter = 0;
+      pr2 = 0;
+      pr3 = 0;
       curArtName = titlecaseName(text);
       curIsProduct = part === 2 && !NON_PRODUCT_ART.test(text);
+      curBlock = { title: `${part}.${art} ${text}`, lines: [`${part}.${art} ${text}`] };
     } else if (level === 1) {
       letter += 1;
+      pr2 = 0;
+      pr3 = 0;
+      const letterCh = String.fromCharCode(64 + letter);
+      if (curBlock) curBlock.lines.push(`${letterCh}. ${text}`);
       if (!(allParts || curIsProduct)) continue;
-      const outline = `${part}.${art} ${String.fromCharCode(64 + letter)}`;
+      const outline = `${part}.${art} ${letterCh}`;
       const qualifier = fullSubheading
         ? clean(text).replace(/:+\s*$/, "")
         : looksLikeSize(text)
           ? makeQualifier(text)
           : "";
-      items.push({ section, outline, name: curArtName, qualifier, source: sourceName });
+      items.push({
+        section,
+        outline,
+        name: curArtName,
+        qualifier,
+        source: sourceName,
+        specTitle: curBlock ? curBlock.title : "",
+      });
+      blockOf.push(curBlock || { title: "", lines: [] });
+    } else if (level === 2) {
+      pr2 += 1;
+      pr3 = 0;
+      if (curBlock) curBlock.lines.push(`    ${pr2}. ${text}`);
+    } else if (level === 3) {
+      pr3 += 1;
+      if (curBlock) curBlock.lines.push(`        ${String.fromCharCode(96 + pr3)}. ${text}`);
+    } else if (typeof level === "number") {
+      if (curBlock) curBlock.lines.push(`            ${text}`);
     }
+  }
+
+  // Fill each item's full Article block text now that articles are complete.
+  for (let i = 0; i < items.length; i++) {
+    items[i].specText = blockOf[i].lines.join("\n");
   }
 
   if (!section) section = findSectionNumber(sourceName);

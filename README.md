@@ -39,6 +39,12 @@ port of the `spec_to_submittal.py` tool into the add-in. Two ways in:
   highlighted in the source document (`core/submittalHighlight.ts`); **Clear highlights**
   removes them. The preview's **Item Name** column is editable; **Export edited table
   (.DOCX)** writes a Submittal Review from the (edited) rows.
+
+Every exported review is **linked to its source spec**: the export embeds each item's source
+Article block into the review `.docx` (a Word Custom XML part, `core/specLink.ts`). Reopen the
+review, open the add-in, and a **Specification link** card lists the items — click one to see
+its full specification section in the pane, with no need for the original file. The data rides
+inside the review document and is read back from its own bytes.
 - **Compile submittal table** — pick one or more spec **.docx** files; each is scanned and
   the rows are **combined** into a single table, sorted by spec section. Output goes to a
   **Submittal Review (.docx)** download (full house style via template injection) or is
@@ -190,6 +196,7 @@ confirm each bold run and each bold+strike run gets a trailing bold `(ASI-1)`.
 - `src/core/submittalDocx.ts` — fallback: builds the Submittal Review `.docx` from scratch with the `docx` library (used only if the template can't be fetched).
 - `src/core/submittalInsert.ts` — inserts the compiled table into the open document at the cursor (Office.js).
 - `src/core/submittalHighlight.ts` — highlights (and clears) the extracted product elements in the open document (Office.js).
+- `src/core/specLink.ts` — embeds the review→spec association (each item's source Article block) into the exported .docx as a Word Custom XML part, and reads it back from the document's bytes.
 - `src/taskpane/` — the task pane UI (HTML/CSS + controller).
 - `appPackage/manifest.json` — the add-in manifest.
 

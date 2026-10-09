@@ -37,6 +37,7 @@ import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
 import { exportSubmittalFromTemplate } from "../core/submittalTemplate";
 import { insertSubmittalTable } from "../core/submittalInsert";
 import { highlightProductItems, clearProductHighlights } from "../core/submittalHighlight";
+import { buildSpecLinkPayload, readSpecLink, SpecLinkPayload } from "../core/specLink";
 
 let templates: ArchitectTemplate[] = [];
 let editingIndex: number | null = null; // index being edited, or null when adding
@@ -88,9 +89,62 @@ Office.onReady((info) => {
 
   initTabs();
   initRevision();
+  initSpecLink();
 });
 
+/* --------------------- Specification link (review → spec) --------------------- */
+
+async function initSpecLink(): Promise<void> {
+  try {
+    const bytes = await readDocumentBytes();
+    const payload = await readSpecLink(bytes);
+    renderSpecLink(payload);
+  } catch {
+    renderSpecLink(null);
+  }
+}
+
+function renderSpecLink(payload: SpecLinkPayload | null): void {
+  const card = $("speclink-card");
+  if (!payload || payload.items.length === 0) {
+    card.dataset.hidden = "true";
+    activateTab(currentTab);
+    return;
+  }
+  $("speclink-note").textContent =
+    `This review is linked to ${payload.specName}. Click an item to see its specification section.`;
+  const list = $("speclink-list");
+  list.innerHTML = payload.items
+    .map(
+      (it, i) =>
+        `<button type="button" class="speclink-item" data-i="${i}">` +
+        `${esc(it.outline)} — ${esc(it.itemName)}</button>`
+    )
+    .join("");
+  list
+    .querySelectorAll<HTMLElement>(".speclink-item")
+    .forEach((btn) =>
+      btn.addEventListener("click", () => showSpecSection(payload, Number(btn.dataset.i)))
+    );
+  $("speclink-detail").style.display = "none";
+  card.dataset.hidden = "false";
+  // Surface the link: a linked review is open, so show the Submittal review tab.
+  activateTab("submittal");
+}
+
+function showSpecSection(payload: SpecLinkPayload, i: number): void {
+  const it = payload.items[i];
+  const art = payload.articles[it.artIndex];
+  const detail = $("speclink-detail");
+  detail.innerHTML =
+    `<p class="preview-summary">${esc(it.section)} ${esc(it.outline)} — ${esc(it.itemName)}</p>` +
+    `<pre class="speclink-pre">${esc(art ? art.text : "(section text not found)")}</pre>`;
+  detail.style.display = "block";
+}
+
 /* -------------------------------- Tabs -------------------------------- */
+
+let currentTab = "format";
 
 function initTabs(): void {
   const tabs = document.querySelectorAll<HTMLElement>(".tab");
@@ -101,11 +155,13 @@ function initTabs(): void {
 }
 
 function activateTab(name: string): void {
+  currentTab = name;
   document.querySelectorAll<HTMLElement>(".tab").forEach((tab) => {
     tab.classList.toggle("is-active", tab.dataset.tab === name);
   });
   document.querySelectorAll<HTMLElement>(".card[data-group]").forEach((card) => {
-    card.style.display = card.dataset.group === name ? "" : "none";
+    const show = card.dataset.group === name && card.dataset.hidden !== "true";
+    card.style.display = show ? "" : "none";
   });
 }
 
@@ -231,13 +287,14 @@ async function onExportEdited(): Promise<void> {
       sweSubmittalNo: "",
       contractorSubmittalNo: "",
     };
+    const specLink = buildSpecLinkPayload(items, documentFileName());
     let name: string;
     try {
-      name = await exportSubmittalFromTemplate(items, meta, fileBase);
+      name = await exportSubmittalFromTemplate(items, meta, fileBase, specLink);
     } catch {
-      name = await exportSubmittalDocx(items, meta, fileBase);
+      name = await exportSubmittalDocx(items, meta, fileBase, specLink);
     }
-    setExStatus(`Exported ${items.length} item(s) to ${name}.`, "success");
+    setExStatus(`Exported ${items.length} item(s) to ${name} (linked to the spec).`, "success");
   } catch (err) {
     setExStatus(err instanceof Error ? err.message : String(err), "error");
   } finally {
@@ -328,13 +385,18 @@ async function onSubmittalAction(mode: SubmittalMode): Promise<void> {
         submittalFiles.length === 1 && items[0].section
           ? `Submittal Review - ${items[0].section}`
           : "Submittal Review - Combined";
+      const specName =
+        submittalFiles.length === 1
+          ? submittalFiles[0].name
+          : `${submittalFiles.length} specifications`;
+      const specLink = buildSpecLinkPayload(items, specName);
       // Prefer the firm template (exact house style); fall back to the built-in layout
       // if the bundled template can't be fetched (e.g. offline cache miss).
       let name: string;
       try {
-        name = await exportSubmittalFromTemplate(items, meta, fileBase);
+        name = await exportSubmittalFromTemplate(items, meta, fileBase, specLink);
       } catch {
-        name = await exportSubmittalDocx(items, meta, fileBase);
+        name = await exportSubmittalDocx(items, meta, fileBase, specLink);
       }
       setSubStatus(
         `Compiled ${items.length} item(s) from ${groups.length} spec(s). Downloaded ${name}.${note}`,
