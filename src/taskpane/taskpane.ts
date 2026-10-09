@@ -36,6 +36,7 @@ import { extractFromFile, extractFromDocx, combineAndSort } from "../core/submit
 import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
 import { exportSubmittalFromTemplate } from "../core/submittalTemplate";
 import { insertSubmittalTable } from "../core/submittalInsert";
+import { highlightProductItems, clearProductHighlights } from "../core/submittalHighlight";
 
 let templates: ArchitectTemplate[] = [];
 let editingIndex: number | null = null; // index being edited, or null when adding
@@ -77,6 +78,7 @@ Office.onReady((info) => {
   $("editor-save").addEventListener("click", onEditorSave);
 
   $("ex-extract-btn").addEventListener("click", onExtractOpenDoc);
+  $("ex-clear-btn").addEventListener("click", onClearHighlights);
   $("sub-pick-btn").addEventListener("click", () => $<HTMLInputElement>("sub-files").click());
   $<HTMLInputElement>("sub-files").addEventListener("change", onSubmittalFilesPicked);
   $("sub-compile-btn").addEventListener("click", () => onSubmittalAction("download"));
@@ -115,8 +117,11 @@ function setExStatus(message: string, kind: "info" | "error" | "success" = "info
 
 async function onExtractOpenDoc(): Promise<void> {
   const btn = $<HTMLInputElement>("ex-extract-btn");
+  const clearBtn = $<HTMLInputElement>("ex-clear-btn");
   const allParts = $<HTMLInputElement>("ex-allparts").checked;
+  const highlight = $<HTMLInputElement>("ex-highlight").checked;
   btn.disabled = true;
+  clearBtn.disabled = true;
   setExStatus("Reading the open document…");
   try {
     const bytes = await readDocumentBytes();
@@ -128,13 +133,37 @@ async function onExtractOpenDoc(): Promise<void> {
         "No product items found. Is this a MasterSpec section (SCT/PRT/ART styles)? Try “Include every Article”.",
         "error"
       );
-    } else {
-      setExStatus(`Extracted ${items.length} item(s) from ${name}.`, "success");
+      return;
     }
+    let msg = `Extracted ${items.length} item(s) from ${name}.`;
+    if (highlight) {
+      const marked = await highlightProductItems(allParts);
+      msg += ` Highlighted ${marked} element(s) in the document.`;
+    }
+    setExStatus(msg, "success");
   } catch (err) {
     setExStatus(err instanceof Error ? err.message : String(err), "error");
   } finally {
     btn.disabled = false;
+    clearBtn.disabled = false;
+  }
+}
+
+async function onClearHighlights(): Promise<void> {
+  const btn = $<HTMLInputElement>("ex-extract-btn");
+  const clearBtn = $<HTMLInputElement>("ex-clear-btn");
+  const allParts = $<HTMLInputElement>("ex-allparts").checked;
+  btn.disabled = true;
+  clearBtn.disabled = true;
+  setExStatus("Clearing highlights…");
+  try {
+    const cleared = await clearProductHighlights(allParts);
+    setExStatus(`Cleared highlights from ${cleared} element(s).`, "success");
+  } catch (err) {
+    setExStatus(err instanceof Error ? err.message : String(err), "error");
+  } finally {
+    btn.disabled = false;
+    clearBtn.disabled = false;
   }
 }
 

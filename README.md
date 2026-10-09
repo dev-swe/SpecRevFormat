@@ -34,7 +34,10 @@ port of the `spec_to_submittal.py` tool into the add-in. Two ways in:
 
 - **Extract from open document** — click **Extract Table** to scan the spec currently open
   in Word and list its **PART 2 — PRODUCTS** items right in the pane, beside the document
-  (reads the open file via `getFileAsync`; no file to pick).
+  (reads the open file via `getFileAsync`; no file to pick). With **Highlight the extracted
+  items** ticked, the matching product Article headings and their size subheadings are
+  highlighted in the source document (`core/submittalHighlight.ts`); **Clear highlights**
+  removes them.
 - **Compile submittal table** — pick one or more spec **.docx** files; each is scanned and
   the rows are **combined** into a single table, sorted by spec section. Output goes to a
   **Submittal Review (.docx)** download (full house style via template injection) or is
@@ -181,6 +184,8 @@ confirm each bold run and each bold+strike run gets a trailing bold `(ASI-1)`.
 - `src/core/submittal.ts` — submittal-item extraction (port of `spec_to_submittal.py`): parses spec `.docx` via JSZip and computes the outline/qualifier rows.
 - `src/core/submittalTemplate.ts` — builds the Submittal Review by injecting rows into the bundled template `assets/submittal-template.docx` (JSZip + DOM edits), preserving the firm's exact styling.
 - `src/core/submittalDocx.ts` — fallback: builds the Submittal Review `.docx` from scratch with the `docx` library (used only if the template can't be fetched).
+- `src/core/submittalInsert.ts` — inserts the compiled table into the open document at the cursor (Office.js).
+- `src/core/submittalHighlight.ts` — highlights (and clears) the extracted product elements in the open document (Office.js).
 - `src/taskpane/` — the task pane UI (HTML/CSS + controller).
 - `appPackage/manifest.json` — the add-in manifest.
 
