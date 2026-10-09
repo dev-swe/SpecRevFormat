@@ -16,6 +16,7 @@ import { formatSpecification, previewSpecification, LogEntry, PreviewResult } fr
 import { downloadRevisionLog } from "../core/revlog";
 import {
   downloadBackup,
+  readDocumentBytes,
   documentIsSaved,
   documentBaseName,
   documentFileName,
@@ -31,7 +32,7 @@ import {
 } from "../core/revision";
 import { exportNarrativeDocx } from "../core/docx";
 import { downloadContribution } from "../core/contribution";
-import { extractFromFile, combineAndSort } from "../core/submittal";
+import { extractFromFile, extractFromDocx, combineAndSort } from "../core/submittal";
 import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
 import { exportSubmittalFromTemplate } from "../core/submittalTemplate";
 import { insertSubmittalTable } from "../core/submittalInsert";
@@ -75,6 +76,7 @@ Office.onReady((info) => {
   $("editor-cancel").addEventListener("click", closeEditor);
   $("editor-save").addEventListener("click", onEditorSave);
 
+  $("ex-extract-btn").addEventListener("click", onExtractOpenDoc);
   $("sub-pick-btn").addEventListener("click", () => $<HTMLInputElement>("sub-files").click());
   $<HTMLInputElement>("sub-files").addEventListener("change", onSubmittalFilesPicked);
   $("sub-compile-btn").addEventListener("click", () => onSubmittalAction("download"));
@@ -101,6 +103,39 @@ function activateTab(name: string): void {
   document.querySelectorAll<HTMLElement>(".card[data-group]").forEach((card) => {
     card.style.display = card.dataset.group === name ? "" : "none";
   });
+}
+
+/* --------------------- Extract from open document --------------------- */
+
+function setExStatus(message: string, kind: "info" | "error" | "success" = "info"): void {
+  const el = $("ex-status");
+  el.textContent = message;
+  el.className = "status " + kind;
+}
+
+async function onExtractOpenDoc(): Promise<void> {
+  const btn = $<HTMLInputElement>("ex-extract-btn");
+  const allParts = $<HTMLInputElement>("ex-allparts").checked;
+  btn.disabled = true;
+  setExStatus("Reading the open document…");
+  try {
+    const bytes = await readDocumentBytes();
+    const name = documentFileName();
+    const items = await extractFromDocx(bytes, name, allParts);
+    renderItemsPreview($("ex-preview"), items);
+    if (items.length === 0) {
+      setExStatus(
+        "No product items found. Is this a MasterSpec section (SCT/PRT/ART styles)? Try “Include every Article”.",
+        "error"
+      );
+    } else {
+      setExStatus(`Extracted ${items.length} item(s) from ${name}.`, "success");
+    }
+  } catch (err) {
+    setExStatus(err instanceof Error ? err.message : String(err), "error");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 /* ----------------------- Compile submittal table ----------------------- */
@@ -207,7 +242,15 @@ async function onSubmittalAction(mode: SubmittalMode): Promise<void> {
 }
 
 function renderSubmittalPreview(items: ReturnType<typeof combineAndSort>, errors: string[]): void {
-  const panel = $("sub-preview");
+  renderItemsPreview($("sub-preview"), items, errors);
+}
+
+/** Render extracted rows into a preview panel (Spec Section | Item Name). */
+function renderItemsPreview(
+  panel: HTMLElement,
+  items: ReturnType<typeof combineAndSort>,
+  errors: string[] = []
+): void {
   const rows = items
     .map(
       (it) =>

@@ -78,6 +78,31 @@
             </div>
         </section>
 
+        <!-- ============ Extract from open document ============ -->
+        <section class="card" data-group="submittal">
+            <div class="card-header"><span class="card-title">Extract from open document</span></div>
+            <div class="card-body">
+                <p class="help">
+                    Reads the specification open in Word right now and lists its
+                    <b>PART 2 &mdash; PRODUCTS</b> items here, beside the document &mdash; no file to pick.
+                </p>
+
+                <label class="checkbox">
+                    <input id="ex-allparts" type="checkbox" />
+                    <span>Include every Article (Parts 1/2/3), not just Part 2 products</span>
+                </label>
+
+                <div class="button-row">
+                    <button id="ex-extract-btn" class="btn btn-primary btn-block" type="button">
+                        Extract Table
+                    </button>
+                </div>
+
+                <div id="ex-preview" class="preview-panel" style="display: none;"></div>
+                <p id="ex-status" class="status" aria-live="polite"></p>
+            </div>
+        </section>
+
         <!-- ============ Compile submittal table ============ -->
         <details class="card" id="submittal-card" data-group="submittal" open>
             <summary class="card-header">

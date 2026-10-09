@@ -27,13 +27,19 @@ be shared via **Export / Import** (a JSON file).
   did, so this is the equivalent).
 - All edits run in a single batch, so **one Ctrl+Z** reverts a formatting run.
 
-## Compile submittal table
+## Submittal review (tab)
 
-The **Compile submittal table** panel turns one or more specification sections into a
-**Submittal Review (.docx)** — a port of the `spec_to_submittal.py` tool into the add-in.
-Pick one or more spec **.docx** files; each is scanned for its **PART 2 — PRODUCTS**
-articles and the rows are combined into a single table, sorted by spec section, then
-downloaded. Header fields (project, submittal nos., reviewer) fill the cover block.
+The **Submittal review** tab turns specification sections into submittal-review rows — a
+port of the `spec_to_submittal.py` tool into the add-in. Two ways in:
+
+- **Extract from open document** — click **Extract Table** to scan the spec currently open
+  in Word and list its **PART 2 — PRODUCTS** items right in the pane, beside the document
+  (reads the open file via `getFileAsync`; no file to pick).
+- **Compile submittal table** — pick one or more spec **.docx** files; each is scanned and
+  the rows are **combined** into a single table, sorted by spec section. Output goes to a
+  **Submittal Review (.docx)** download (full house style via template injection) or is
+  **inserted into the open document** at the cursor. Header fields (project, submittal nos.,
+  reviewer) fill the cover block.
 
 How a spec maps to a row (mirrors the script):
 

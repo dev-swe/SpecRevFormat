@@ -52,7 +52,11 @@ export function documentIsSaved(): boolean {
  * Read the whole document and trigger a download of a `_original` copy.
  * Resolves once the download has started; rejects on failure.
  */
-export function downloadBackup(): Promise<string> {
+/**
+ * Read the whole open document (its .docx zip) and return the assembled bytes.
+ * Works whether or not the document has been saved to disk.
+ */
+export function readDocumentBytes(): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     Office.context.document.getFileAsync(
       Office.FileType.Compressed,
@@ -70,19 +74,14 @@ export function downloadBackup(): Promise<string> {
 
         const finish = () => {
           file.closeAsync(() => {
-            const blob = new Blob(slices as BlobPart[], {
-              type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            });
-            const url = URL.createObjectURL(blob);
-            const fileName = baseNameFromUrl() + "_original.docx";
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            resolve(fileName);
+            const total = slices.reduce((n, s) => n + s.length, 0);
+            const out = new Uint8Array(total);
+            let offset = 0;
+            for (const s of slices) {
+              out.set(s, offset);
+              offset += s.length;
+            }
+            resolve(out);
           });
         };
 
@@ -111,4 +110,21 @@ export function downloadBackup(): Promise<string> {
       }
     );
   });
+}
+
+export async function downloadBackup(): Promise<string> {
+  const bytes = await readDocumentBytes();
+  const blob = new Blob([bytes as BlobPart], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
+  const url = URL.createObjectURL(blob);
+  const fileName = baseNameFromUrl() + "_original.docx";
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return fileName;
 }
