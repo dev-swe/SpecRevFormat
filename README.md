@@ -37,7 +37,8 @@ port of the `spec_to_submittal.py` tool into the add-in. Two ways in:
   (reads the open file via `getFileAsync`; no file to pick). With **Highlight the extracted
   items** ticked, the matching product Article headings and their size subheadings are
   highlighted in the source document (`core/submittalHighlight.ts`); **Clear highlights**
-  removes them.
+  removes them. The preview's **Item Name** column is editable; **Export edited table
+  (.DOCX)** writes a Submittal Review from the (edited) rows.
 - **Compile submittal table** — pick one or more spec **.docx** files; each is scanned and
   the rows are **combined** into a single table, sorted by spec section. Output goes to a
   **Submittal Review (.docx)** download (full house style via template injection) or is

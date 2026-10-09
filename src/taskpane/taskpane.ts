@@ -32,7 +32,7 @@ import {
 } from "../core/revision";
 import { exportNarrativeDocx } from "../core/docx";
 import { downloadContribution } from "../core/contribution";
-import { extractFromFile, extractFromDocx, combineAndSort } from "../core/submittal";
+import { SubmittalItem, extractFromFile, extractFromDocx, combineAndSort } from "../core/submittal";
 import { exportSubmittalDocx, SubmittalMeta } from "../core/submittalDocx";
 import { exportSubmittalFromTemplate } from "../core/submittalTemplate";
 import { insertSubmittalTable } from "../core/submittalInsert";
@@ -44,6 +44,7 @@ let lastLog: { entries: LogEntry[]; tagText: string } | null = null; // for CSV 
 let summary: RevisionSummary = emptySummary(); // revision-summary table (per document)
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
 let submittalFiles: File[] = []; // specs picked for the submittal-table compiler
+let extractedItems: SubmittalItem[] = []; // rows from the open document, for editing/export
 
 function $<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -79,6 +80,7 @@ Office.onReady((info) => {
 
   $("ex-extract-btn").addEventListener("click", onExtractOpenDoc);
   $("ex-clear-btn").addEventListener("click", onClearHighlights);
+  $("ex-export-btn").addEventListener("click", onExportEdited);
   $("sub-pick-btn").addEventListener("click", () => $<HTMLInputElement>("sub-files").click());
   $<HTMLInputElement>("sub-files").addEventListener("change", onSubmittalFilesPicked);
   $("sub-compile-btn").addEventListener("click", () => onSubmittalAction("download"));
@@ -128,7 +130,9 @@ async function onExtractOpenDoc(): Promise<void> {
     const bytes = await readDocumentBytes();
     const name = documentFileName();
     const items = await extractFromDocx(bytes, name, allParts, fullSub);
-    renderItemsPreview($("ex-preview"), items);
+    extractedItems = items;
+    renderEditablePreview($("ex-preview"), items);
+    $("ex-export-row").style.display = items.length ? "" : "none";
     if (items.length === 0) {
       setExStatus(
         "No product items found. Is this a MasterSpec section (SCT/PRT/ART styles)? Try “Include every Article”.",
@@ -136,7 +140,7 @@ async function onExtractOpenDoc(): Promise<void> {
       );
       return;
     }
-    let msg = `Extracted ${items.length} item(s) from ${name}.`;
+    let msg = `Extracted ${items.length} item(s) from ${name}. Edit any Item Name, then export.`;
     if (highlight) {
       const marked = await highlightProductItems(allParts);
       msg += ` Highlighted ${marked} element(s) in the document.`;
@@ -165,6 +169,79 @@ async function onClearHighlights(): Promise<void> {
   } finally {
     btn.disabled = false;
     clearBtn.disabled = false;
+  }
+}
+
+/** The Item Name shown (and edited) for a row: name plus any qualifier, on one line. */
+function itemNameText(it: SubmittalItem): string {
+  return it.qualifier ? `${it.name} ${it.qualifier}` : it.name;
+}
+
+/** Render the extracted rows with an editable Item Name column. */
+function renderEditablePreview(panel: HTMLElement, items: SubmittalItem[]): void {
+  if (items.length === 0) {
+    panel.innerHTML = "";
+    panel.style.display = "none";
+    return;
+  }
+  const rows = items
+    .map(
+      (it, i) =>
+        `<tr><td>${esc(it.section)} ${esc(it.outline)}</td>` +
+        `<td><input class="ex-name-input" type="text" data-idx="${i}" value="${esc(
+          itemNameText(it)
+        )}" /></td></tr>`
+    )
+    .join("");
+  panel.innerHTML =
+    `<p class="preview-summary">${items.length} item(s) — edit Item Name as needed.</p>` +
+    `<div class="preview-table-wrap"><table class="preview-table"><thead><tr>` +
+    `<th>Spec Section</th><th>Item Name</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  panel.style.display = "block";
+}
+
+/** Read the current (possibly edited) Item Name values back onto the items. */
+function editedItems(): SubmittalItem[] {
+  const inputs = $("ex-preview").querySelectorAll<HTMLInputElement>("input.ex-name-input");
+  return extractedItems.map((it, i) => {
+    const input = Array.from(inputs).find((el) => Number(el.dataset.idx) === i);
+    const name = input ? input.value.trim() : itemNameText(it);
+    // The edited text becomes the whole Item Name (single line); qualifier folds in.
+    return { ...it, name, qualifier: "" };
+  });
+}
+
+async function onExportEdited(): Promise<void> {
+  if (extractedItems.length === 0) {
+    setExStatus("Extract a document first.", "error");
+    return;
+  }
+  const btn = $<HTMLInputElement>("ex-export-btn");
+  btn.disabled = true;
+  setExStatus("Building the submittal review…");
+  try {
+    const items = editedItems();
+    const section = items[0].section;
+    const fileBase = section ? `Submittal Review - ${section}` : "Submittal Review";
+    const meta = {
+      project: "",
+      sweProjectNo: "",
+      reviewDate: "",
+      reviewedBy: "",
+      sweSubmittalNo: "",
+      contractorSubmittalNo: "",
+    };
+    let name: string;
+    try {
+      name = await exportSubmittalFromTemplate(items, meta, fileBase);
+    } catch {
+      name = await exportSubmittalDocx(items, meta, fileBase);
+    }
+    setExStatus(`Exported ${items.length} item(s) to ${name}.`, "success");
+  } catch (err) {
+    setExStatus(err instanceof Error ? err.message : String(err), "error");
+  } finally {
+    btn.disabled = false;
   }
 }
 

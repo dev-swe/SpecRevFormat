@@ -421,6 +421,22 @@ input.control.color {
   border-bottom: none;
 }
 
+.ex-name-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--text-body);
+  padding: 3px 5px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--card);
+}
+
+.ex-name-input:focus {
+  outline: none;
+  border-color: var(--forest);
+}
+
 .cell-add {
   color: var(--forest);
   font-weight: 600;
