@@ -3,7 +3,7 @@
  * Wires the picker + template editor to the core formatting engine.
  */
 
-/* global Office, document, Event, HTMLElement, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, setTimeout, clearTimeout, File */
+/* global Office, document, Event, HTMLElement, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, setTimeout, clearTimeout, File, URL, location */
 
 import { ArchitectTemplate, newTemplate } from "../core/templates";
 import {
@@ -132,13 +132,67 @@ function renderSpecLink(payload: SpecLinkPayload | null): void {
   activateTab("submittal");
 }
 
+interface SectionMessage {
+  section: string;
+  outline: string;
+  itemName: string;
+  title: string;
+  text: string;
+}
+
+let sectionDialog: Office.Dialog | null = null;
+let pendingSection: SectionMessage | null = null;
+
 function showSpecSection(payload: SpecLinkPayload, i: number): void {
   const it = payload.items[i];
   const art = payload.articles[it.artIndex];
+  const data: SectionMessage = {
+    section: it.section,
+    outline: it.outline,
+    itemName: it.itemName,
+    title: art ? art.title : it.itemName,
+    text: art ? art.text : "",
+  };
+  openSectionDialog(data);
+}
+
+/** Open (or update) the popup dialog showing the section; fall back to the inline panel. */
+function openSectionDialog(data: SectionMessage): void {
+  pendingSection = data;
+  // If a dialog is already open, just push the new section into it.
+  if (sectionDialog) {
+    sectionDialog.messageChild(JSON.stringify(data));
+    return;
+  }
+  const url = new URL("specsection.html", location.href).href;
+  try {
+    Office.context.ui.displayDialogAsync(url, { height: 60, width: 45 }, (result) => {
+      if (result.status !== Office.AsyncResultStatus.Succeeded) {
+        renderSectionInline(data);
+        return;
+      }
+      sectionDialog = result.value;
+      sectionDialog.addEventHandler(Office.EventType.DialogMessageReceived, () => {
+        // The dialog signals it's ready; send the current section.
+        if (sectionDialog && pendingSection)
+          sectionDialog.messageChild(JSON.stringify(pendingSection));
+      });
+      sectionDialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
+        sectionDialog = null; // dialog closed (by user or error)
+      });
+    });
+  } catch {
+    renderSectionInline(data);
+  }
+}
+
+/** Fallback: show the section inline in the pane (if the Dialog API is unavailable). */
+function renderSectionInline(data: SectionMessage): void {
   const detail = $("speclink-detail");
   detail.innerHTML =
-    `<p class="preview-summary">${esc(it.section)} ${esc(it.outline)} — ${esc(it.itemName)}</p>` +
-    `<pre class="speclink-pre">${esc(art ? art.text : "(section text not found)")}</pre>`;
+    `<p class="preview-summary">${esc(data.section)} ${esc(data.outline)} — ${esc(
+      data.itemName
+    )}</p>` + `<pre class="speclink-pre">${esc(data.text || "(section text not found)")}</pre>`;
   detail.style.display = "block";
 }
 

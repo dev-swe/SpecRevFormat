@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Specification Section</title>
+
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+    <style>
+        :root {
+            --forest: #12413c;
+            --forest-soft: #eef4f3;
+            --border-soft: #d7dee5;
+            --text-body: #334155;
+            --muted: #64748b;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #ffffff;
+            color: var(--text-body);
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .wrap {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        header.bar {
+            background: var(--forest);
+            color: #fff;
+            padding: 12px 18px;
+            flex-shrink: 0;
+        }
+
+        header.bar .crumb {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        header.bar h1 {
+            margin: 2px 0 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        main {
+            flex: 1;
+            overflow: auto;
+            padding: 16px 18px;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+            font-size: 13px;
+            color: var(--text-body);
+        }
+
+        .empty {
+            color: var(--muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header class="bar">
+            <div class="crumb" id="crumb"></div>
+            <h1 id="title">Specification Section</h1>
+        </header>
+        <main>
+            <pre id="body"><span class="empty">Loading…</span></pre>
+        </main>
+    </div>
+</body>
+
+</html>

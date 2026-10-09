@@ -36,6 +36,7 @@ module.exports = async (env, options) => {
       polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
       taskpane: ["./src/taskpane/taskpane.ts", "./src/taskpane/taskpane.html"],
       commands: "./src/commands/commands.ts",
+      specsection: "./src/dialog/specsection.ts",
     },
     output: {
       clean: true,
@@ -106,6 +107,11 @@ module.exports = async (env, options) => {
         filename: "commands.html",
         template: "./src/commands/commands.html",
         chunks: ["polyfill", "commands"],
+      }),
+      new HtmlWebpackPlugin({
+        filename: "specsection.html",
+        template: "./src/dialog/specsection.html",
+        chunks: ["polyfill", "specsection"],
       }),
     ],
     devServer: {
