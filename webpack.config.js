@@ -39,6 +39,10 @@ module.exports = async (env, options) => {
     },
     output: {
       clean: true,
+      // Content-hashed bundle names so a deploy never serves a stale cached JS.
+      // The HTML files keep stable names (the manifest points at them) and
+      // HtmlWebpackPlugin injects the hashed script names into them.
+      filename: dev ? "[name].js" : "[name].[contenthash].js",
     },
     resolve: {
       extensions: [".ts", ".html", ".js"],
