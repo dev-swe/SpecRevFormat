@@ -13,7 +13,7 @@
 
 /* global Word */
 
-import { clean } from "./submittal";
+import { clean, partHeadingNumber } from "./submittal";
 
 // Highlight applied to matched paragraphs (Word highlight color name or #RRGGBB).
 const HIGHLIGHT = "Yellow";
@@ -57,9 +57,10 @@ async function markProductItems(allParts: boolean, apply: boolean): Promise<numb
       if (!text) continue;
       const style = (p.style || "").toUpperCase();
       const level = LEVEL[style];
+      const partNo = partHeadingNumber(style, level !== undefined, text, part);
 
-      if (level === "PRT") {
-        part += 1;
+      if (partNo) {
+        part = partNo;
       } else if (level === "ART") {
         curIsProduct = part === 2 && !NON_PRODUCT_ART.test(text);
         curArt = p;

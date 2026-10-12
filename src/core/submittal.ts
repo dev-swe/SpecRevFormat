@@ -153,6 +153,38 @@ const LEVEL: Record<string, string | number> = {
 };
 
 /**
+ * The PART number a paragraph introduces, or 0 if it isn't a PART heading.
+ *
+ * Numbers come from the heading NAME, not a running count, because some firms style the
+ * "PRODUCTS" heading with their own paragraph style instead of the CSI `PRT` style (e.g.
+ * Rowell Brokaw's "RBA Standard Level 1 Style"). Counting only `PRT` paragraphs then skips
+ * PRODUCTS and mislabels EXECUTION as Part 2. Mapping GENERAL→1, PRODUCTS→2, EXECUTION→3
+ * (or `PART n`) keeps the parts correct regardless of style. Article/paragraph styles
+ * (ART, PR1–PR5) are never treated as PART headings, so an article titled e.g. "GENERAL"
+ * inside a part is not mistaken for one.
+ *
+ * `styleUpper` is the uppercased paragraph style; `levelKnown` is whether it maps to a
+ * known CSI level (SCT/PRT/ART/PR#); `prevPart` is the current part (for an unrecognized
+ * `PRT`-styled heading).
+ */
+export function partHeadingNumber(
+  styleUpper: string,
+  levelKnown: boolean,
+  text: string,
+  prevPart: number
+): number {
+  const isPrt = styleUpper === "PRT";
+  if (!isPrt && levelKnown) return 0; // ART / PR# / SCT are never part headings
+  const u = clean(text).toUpperCase();
+  const m = /^PART\s+(\d+)\b/.exec(u);
+  if (m) return parseInt(m[1], 10);
+  if (u === "GENERAL") return 1;
+  if (u === "PRODUCTS") return 2;
+  if (u === "EXECUTION") return 3;
+  return isPrt ? prevPart + 1 : 0; // PRT-styled but unrecognized name
+}
+
+/**
  * Read a .docx File/Blob/ArrayBuffer and return its extracted submittal rows.
  *
  * `fullSubheading` controls the Item Name's second line: when false (default) it is the
@@ -201,11 +233,15 @@ export async function extractFromDocx(
     const text = clean(paragraphText(p));
     if (!text) continue;
 
+    const partNo = partHeadingNumber(style, level !== undefined, text, part);
     if (style === "SCT" || (!section && text.toUpperCase().includes("SECTION"))) {
       section = findSectionNumber(text) || section;
-    } else if (level === "PRT") {
-      part += 1;
+    } else if (partNo) {
+      part = partNo;
       art = 0;
+      pr2 = 0;
+      pr3 = 0;
+      curBlock = null;
     } else if (level === "ART") {
       art += 1;
       letter = 0;
