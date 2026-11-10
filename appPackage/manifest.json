@@ -13,9 +13,9 @@
     },
     "developer": {
         "name": "Evie M. Lutz",
-        "websiteUrl": "https://www.contoso.com",
-        "privacyUrl": "https://www.contoso.com/privacy",
-        "termsOfUseUrl": "https://www.contoso.com/servicesagreement"
+        "websiteUrl": "https://localhost:3000/",
+        "privacyUrl": "https://localhost:3000/",
+        "termsOfUseUrl": "https://localhost:3000/"
     },
     "icons": {
         "outline": "assets/outline.png",
@@ -37,7 +37,7 @@
         }
     },
     "validDomains": [
-        "contoso.com"
+        "localhost:3000"
     ],
     "extensions": [
         {
@@ -62,29 +62,6 @@
                             "view": "dashboard"
                         }
                     ]
-                },
-                {
-                    "requirements": {
-                        "capabilities": [
-                            {
-                                "name": "AddinCommands",
-                                "minVersion": "1.1"
-                            }
-                        ]
-                    },
-                    "id": "CommandsRuntime",
-                    "type": "general",
-                    "code": {
-                        "page": "https://localhost:3000/commands.html",
-                        "script": "https://localhost:3000/commands.js"
-                    },
-                    "lifetime": "short",
-                    "actions": [
-                        {
-                            "id": "action",
-                            "type": "executeFunction"
-                        }
-                    ]
                 }
             ],
             "ribbons": [
@@ -97,7 +74,7 @@
                             "builtInTabId": "TabHome",
                             "groups": [
                                 {
-                                    "id": "msgReadGroup",
+                                    "id": "SpecFormatterGroup",
                                     "label": "Spec Formatter",
                                     "icons": [
                                         {
@@ -115,7 +92,7 @@
                                     ],
                                     "controls": [
                                         {
-                                            "id": "msgReadOpenPaneButton",
+                                            "id": "SpecFormatterOpenPaneButton",
                                             "type": "button",
                                             "label": "Spec Formatter",
                                             "icons": [

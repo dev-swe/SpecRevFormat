@@ -97,7 +97,12 @@ module.exports = async (env, options) => {
               if (dev) {
                 return content;
               } else {
-                return content.toString().replace(new RegExp(urlDev, "g"), urlProd);
+                // Rewrite every dev URL, and the bare "localhost:3000" validDomains
+                // entry (host only, no scheme/path/trailing slash) to the production host.
+                return content
+                  .toString()
+                  .replace(new RegExp(urlDev, "g"), urlProd)
+                  .replace(/"localhost:3000"/g, JSON.stringify(new URL(urlProd).host));
               }
             },
           },
