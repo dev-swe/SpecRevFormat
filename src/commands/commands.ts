@@ -1,15 +1,8 @@
-import { insertBlueParagraphInWord } from "./word";
-
 /* global Office */
 
-// Register the add-in commands with the Office host application.
-Office.onReady(async (info) => {
-  switch (info.host) {
-    case Office.HostType.Word:
-      Office.actions.associate("action", insertBlueParagraphInWord);
-      break;
-    default: {
-      throw new Error(`${info.host} not supported.`);
-    }
-  }
+// The ribbon button opens the task pane directly (no function command), so there is
+// nothing to register here. This file only exists so commands.html (the classic XML
+// manifest's FunctionFile) loads Office.js and stays a valid, empty command surface.
+Office.onReady(() => {
+  // Intentionally empty.
 });
