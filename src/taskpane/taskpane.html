@@ -284,15 +284,23 @@
                         Export narrative (.DOCX)
                     </button>
                 </div>
-                <div class="button-row">
+                <!--
+                    Track Revisions JSON export: hidden until it is ready to ship. The code is intact
+                    (handler wired in taskpane.ts, core/contribution.ts). To bring it back, delete the
+                    style="display: none;" on the two elements below.
+                -->
+                <div class="button-row" style="display: none;">
                     <button id="rev-export-json-btn" class="btn btn-secondary btn-block" type="button">
                         Export for Track Revisions (JSON)
                     </button>
                 </div>
-                <p class="help">
+                <p class="help" style="display: none;">
                     Drop the JSON in the project's <b>10&nbsp;CAD\Coordination\spec_narratives\</b>
                     folder (or import it from the Track Revisions tool) to compile it into the shared
-                    Change Narrative. Shared spec templates live in
+                    Change Narrative.
+                </p>
+                <p class="help">
+                    Shared spec templates live in
                     <b>10&nbsp;CAD\Coordination\templates\spec_templates.json</b> &mdash; use the
                     Templates panel's Import to load them.
                 </p>
