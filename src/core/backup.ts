@@ -1,10 +1,12 @@
 /*
- * "Save a copy first" backup.
+ * Document backup (taken automatically before formatting, or on demand).
  *
  * The original VBA wrote `<name>_original.<ext>` next to the file. The Office.js sandbox
  * can't write to arbitrary disk paths, so instead we read the current document bytes via
- * getFileAsync and hand the user a download of `<name>_original.docx`. This is the
- * closest available equivalent and pairs with single-Ctrl+Z undo as the safety net.
+ * getFileAsync and hand the user a timestamped download. getFileAsync returns the document
+ * as it is NOW (unsaved edits included), so the "before formatting" copy must be taken
+ * before the format run. This is the closest available equivalent and pairs with
+ * single-Ctrl+Z undo as the safety net.
  */
 
 /* global Office, Blob, BlobPart, URL, document */
@@ -49,7 +51,7 @@ export function documentIsSaved(): boolean {
 }
 
 /**
- * Read the whole document and trigger a download of a `_original` copy.
+ * Read the whole document and trigger a download of a timestamped copy.
  * Resolves once the download has started; rejects on failure.
  */
 /**
@@ -112,13 +114,28 @@ export function readDocumentBytes(): Promise<Uint8Array> {
   });
 }
 
-export async function downloadBackup(): Promise<string> {
+/** Local timestamp for backup file names, e.g. 20261110-143005. */
+function timestamp(d: Date = new Date()): string {
+  const p = (n: number) => ("0" + n).slice(-2);
+  return (
+    `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}` +
+    `-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+  );
+}
+
+/**
+ * Download a copy of the document exactly as it is right now (including unsaved edits).
+ * `kind` only changes the file name: "before-format" for the automatic copy taken ahead of
+ * a format run, "copy" for the manual button. The timestamp keeps repeat copies from
+ * overwriting each other, and the name no longer claims to be the "original".
+ */
+export async function downloadBackup(kind: "before-format" | "copy" = "copy"): Promise<string> {
   const bytes = await readDocumentBytes();
   const blob = new Blob([bytes as BlobPart], {
     type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   });
   const url = URL.createObjectURL(blob);
-  const fileName = baseNameFromUrl() + "_original.docx";
+  const fileName = `${baseNameFromUrl()}_${kind}_${timestamp()}.docx`;
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
