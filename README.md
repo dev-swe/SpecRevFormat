@@ -22,9 +22,13 @@ be shared via **Export / Import** (a JSON file).
 
 ### Safety
 
-- **Save a copy first** downloads a `<name>_original.docx` backup to your Downloads folder
-  (the browser-based add-in sandbox can't write next to the original file the way the macro
-  did, so this is the equivalent).
+- **Save a copy of the document before formatting** (ticked by default) downloads
+  `<name>_before-format_<timestamp>.docx` to your Downloads folder, then formats. If the copy
+  can't be saved, nothing is formatted until you untick the box. **Save copy of current
+  document** takes the same kind of copy on demand (`<name>_copy_<timestamp>.docx`) of
+  whatever the document holds at that moment, including edits already made. The browser-based
+  add-in sandbox can't write next to the original file the way the macro did, so a download is
+  the equivalent.
 - All edits run in a single batch, so **one Ctrl+Z** reverts a formatting run.
 
 ## Submittal review (tab)

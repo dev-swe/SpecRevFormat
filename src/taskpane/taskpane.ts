@@ -718,10 +718,29 @@ async function onFormat(): Promise<void> {
 
   const btn = $<HTMLInputElement>("format-btn");
   btn.disabled = true;
-  setStatus("Formatting…");
   try {
+    // Take the fallback copy BEFORE touching the document. If it fails, stop: the user can
+    // untick the box to format anyway.
+    let backupName = "";
+    if ($<HTMLInputElement>("auto-backup").checked) {
+      setStatus("Saving a copy before formatting…");
+      try {
+        backupName = await downloadBackup("before-format");
+      } catch (e) {
+        setStatus(
+          "Could not save a copy, so nothing was formatted: " +
+            errorMessage(e) +
+            " Untick “Save a copy of the document before formatting” to format without one.",
+          "error"
+        );
+        return;
+      }
+    }
+
+    setStatus("Formatting…");
     const result = await formatSpecification(tmpl, tagText);
     let msg = `Formatted with “${result.templateName}”.`;
+    if (backupName) msg += ` Pre-format copy saved as “${backupName}”.`;
     if (result.mode === "tag") msg += ` ${result.tagCount} “${tagText}” tag(s) inserted.`;
     msg += " Press Ctrl+Z to undo.";
     setStatus(msg, "success");
@@ -857,7 +876,7 @@ async function onBackup(): Promise<void> {
   btn.disabled = true;
   setStatus("Preparing a copy…");
   try {
-    const fileName = await downloadBackup();
+    const fileName = await downloadBackup("copy");
     setStatus(`Saved a copy as “${fileName}” (check your downloads).`, "success");
   } catch (e) {
     setStatus("Could not save a copy: " + errorMessage(e), "error");

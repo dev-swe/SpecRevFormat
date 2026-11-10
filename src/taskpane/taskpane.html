@@ -58,7 +58,7 @@
 
                 <p id="not-saved-warning" class="warning" style="display: none;">
                     This document hasn't been saved yet. Formatting still works, but save it (or use
-                    &ldquo;Save a copy first&rdquo;) so you have a fallback.
+                    &ldquo;Save copy of current document&rdquo;) so you have a fallback.
                 </p>
 
                 <div class="button-row">
@@ -67,8 +67,13 @@
 
                 <div id="preview-panel" class="preview-panel" style="display: none;"></div>
 
+                <label class="checkbox">
+                    <input id="auto-backup" type="checkbox" checked />
+                    Save a copy of the document before formatting (recommended)
+                </label>
+
                 <div class="button-row">
-                    <button id="backup-btn" class="btn btn-secondary" type="button">Save a copy first</button>
+                    <button id="backup-btn" class="btn btn-secondary" type="button">Save copy of current document</button>
                     <button id="format-btn" class="btn btn-primary" type="button">Format Specification</button>
                 </div>
 
