@@ -119,6 +119,9 @@ Manual sideload (alternative): run `npm run dev-server`, then in Word use
 Distribution = hosting the built files on real HTTPS + pushing the manifest firm-wide.
 It does **not** change the Office.js security sandbox: a deployed add-in still cannot read
 the `10 CAD` network folder — the JSON-contribution bridge to Track Revisions stays.
+(The **Export for Track Revisions (JSON)** button is currently hidden in the Revision
+summary tab; the code is intact. Re-enable it by removing `style="display: none;"` from the
+button's row in `src/taskpane/taskpane.html`.)
 
 Target: **Azure Static Web Apps** (hosting) + **Central Deployment** (M365 admin center).
 
