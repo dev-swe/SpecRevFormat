@@ -1,0 +1,7 @@
+# Leftover local build folders from when this repo held the source.
+# This repo hosts files only; nothing here should ever be committed.
+node_modules/
+dist/
+appPackage/
+.env
+env/.env.*
