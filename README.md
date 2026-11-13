@@ -1,6 +1,6 @@
-# Spec Formatter: hosted files
+# SpecFormat: hosted files
 
-This repository holds only the static web files for the **Spec Formatter** Microsoft Word add-in
+This repository holds only the static web files for the **SpecFormat** Microsoft Word add-in
 (Systems West Engineers, internal tool). GitHub Pages serves them; Word loads them when the
 add-in's task pane opens.
 
